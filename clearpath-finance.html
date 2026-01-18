@@ -1,0 +1,2596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearPath Finance - Personal Financial Clarity</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --white: #FFFFFF;
+            --off-white: #FAFAFA;
+            --light-gray: #F0F0F0;
+            --medium-gray: #E0E0E0;
+            --dark-gray: #666666;
+            --charcoal: #333333;
+            --black: #1A1A1A;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --success: #059669;
+            --warning: #D97706;
+            --danger: #DC2626;
+            --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'DM Serif Display', Georgia, serif;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Accessibility: Focus states */
+        *:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Skip link for accessibility */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 0;
+            background: var(--black);
+            color: var(--white);
+            padding: 12px 24px;
+            z-index: 1000;
+            font-weight: 600;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background: var(--off-white);
+            border-right: 1px solid var(--medium-gray);
+            padding: 32px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 0 24px 32px;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .logo h1 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            color: var(--black);
+            letter-spacing: -0.02em;
+        }
+
+        .logo span {
+            display: block;
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        .nav-section {
+            padding: 24px 16px 8px;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--dark-gray);
+            font-weight: 600;
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 4px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-link:hover {
+            background: var(--light-gray);
+        }
+
+        .nav-link.active {
+            background: var(--white);
+            border-color: var(--black);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px;
+            min-height: 100vh;
+            background: var(--white);
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 2px solid var(--black);
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: var(--dark-gray);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border: 2px solid var(--black);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            margin-top: 4px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--white);
+            border-color: var(--black);
+        }
+
+        .btn-primary:hover {
+            background: var(--charcoal);
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--black);
+            border-color: var(--black);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-gray);
+        }
+
+        .btn-large {
+            padding: 18px 36px;
+            font-size: 1.125rem;
+            min-height: 56px;
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.875rem;
+            min-height: 40px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--black);
+            font-size: 0.9375rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 1rem;
+            font-family: var(--font-body);
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--black);
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:hover {
+            border-color: var(--dark-gray);
+        }
+
+        .form-input:focus {
+            border-color: var(--black);
+            outline: none;
+        }
+
+        .form-input::placeholder {
+            color: var(--dark-gray);
+        }
+
+        .form-hint {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            margin-top: 6px;
+        }
+
+        /* Grid layouts */
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 1200px) {
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats */
+        .stat-card {
+            background: var(--off-white);
+            border: 2px solid var(--medium-gray);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .stat-trend.positive {
+            background: #DCFCE7;
+            color: var(--success);
+        }
+
+        .stat-trend.negative {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+
+        /* Calculator Results */
+        .result-box {
+            background: var(--off-white);
+            border: 2px solid var(--black);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 1rem;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--black);
+        }
+
+        .result-subtext {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+            margin-top: 8px;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 3px dashed var(--medium-gray);
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--off-white);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--black);
+            background: var(--light-gray);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--black);
+            background: var(--light-gray);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border: 2px solid var(--medium-gray);
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        th {
+            background: var(--off-white);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--charcoal);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--off-white);
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        .tag-success {
+            background: #DCFCE7;
+            color: var(--success);
+        }
+
+        .tag-warning {
+            background: #FEF3C7;
+            color: var(--warning);
+        }
+
+        .tag-danger {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+
+        .tag-neutral {
+            background: var(--light-gray);
+            color: var(--charcoal);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 12px;
+            background: var(--light-gray);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--black);
+            border-radius: 100px;
+            transition: width 0.5s ease;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 2px solid var(--medium-gray);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 14px 24px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--black);
+        }
+
+        .tab.active {
+            color: var(--black);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--black);
+        }
+
+        /* Section */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Calculator Section Buttons */
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .calculator-card {
+            background: var(--white);
+            border: 2px solid var(--black);
+            border-radius: 12px;
+            padding: 28px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calculator-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
+        .calculator-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .calculator-card p {
+            font-size: 0.9375rem;
+            color: var(--dark-gray);
+            line-height: 1.5;
+        }
+
+        .calculator-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        /* Insight Cards */
+        .insight-card {
+            background: var(--off-white);
+            border-left: 4px solid var(--black);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 16px;
+        }
+
+        .insight-card h4 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .insight-card p {
+            color: var(--dark-gray);
+            font-size: 0.9375rem;
+        }
+
+        .insight-card.tip {
+            border-left-color: var(--success);
+            background: #F0FDF4;
+        }
+
+        .insight-card.warning {
+            border-left-color: var(--warning);
+            background: #FFFBEB;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+        }
+
+        .comparison-table th {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .comparison-table td {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .comparison-table .feature-name {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .comparison-highlight {
+            background: #F0FDF4;
+        }
+
+        /* Mobile Navigation Toggle */
+        .mobile-nav-toggle {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 24px;
+            }
+
+            .mobile-nav-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, .mobile-nav-toggle {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Amortization Chart Placeholder */
+        .chart-container {
+            background: var(--off-white);
+            border: 2px solid var(--medium-gray);
+            border-radius: 12px;
+            padding: 24px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Slider */
+        .slider-container {
+            margin-bottom: 24px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: var(--black);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--light-gray);
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--black);
+            cursor: pointer;
+            border: 3px solid var(--white);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Alert Box */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            color: #1E40AF;
+        }
+
+        .alert-success {
+            background: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            color: #166534;
+        }
+
+        .alert-warning {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            color: #92400E;
+        }
+
+        /* Secure Badge */
+        .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        /* Two column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 900px) {
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Subscription List */
+        .subscription-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        .subscription-item:last-child {
+            border-bottom: none;
+        }
+
+        .subscription-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .subscription-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .subscription-name {
+            font-weight: 600;
+        }
+
+        .subscription-category {
+            font-size: 0.875rem;
+            color: var(--dark-gray);
+        }
+
+        .subscription-amount {
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+            <div class="logo">
+                <h1>ClearPath</h1>
+                <span>Personal Financial Clarity</span>
+            </div>
+
+            <div class="nav-section">
+                <h2 class="nav-section-title">Overview</h2>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-section="dashboard" aria-current="page">
+                            <span class="nav-icon">📊</span>
+                            Dashboard
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="upload">
+                            <span class="nav-icon">📄</span>
+                            Upload Statements
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h2 class="nav-section-title">Analysis</h2>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="cashflow">
+                            <span class="nav-icon">💰</span>
+                            Cash Flow
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="spending">
+                            <span class="nav-icon">🛒</span>
+                            Spending Habits
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="subscriptions">
+                            <span class="nav-icon">🔄</span>
+                            Subscriptions
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="investments">
+                            <span class="nav-icon">📈</span>
+                            Investments
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h2 class="nav-section-title">Calculators</h2>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="mortgage">
+                            <span class="nav-icon">🏠</span>
+                            Mortgage & Equity
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="rentbuy">
+                            <span class="nav-icon">🔑</span>
+                            Rent vs Own
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="vehicle">
+                            <span class="nav-icon">🚗</span>
+                            Vehicle Calculator
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="retirement">
+                            <span class="nav-icon">🎯</span>
+                            Retirement Planner
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h2 class="nav-section-title">Insights</h2>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="savings">
+                            <span class="nav-icon">💡</span>
+                            Savings Advice
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-section="regression">
+                            <span class="nav-icon">📉</span>
+                            Trend Analysis
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main">
+            <!-- Dashboard Section -->
+            <section class="section active" id="dashboard">
+                <header class="page-header">
+                    <h2 class="page-title">Dashboard</h2>
+                    <p class="page-subtitle">Your complete financial overview at a glance</p>
+                </header>
+
+                <div class="grid grid-4" style="margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div class="stat-value">$8,450</div>
+                        <div class="stat-label">Monthly Income</div>
+                        <span class="stat-trend positive">↑ 5.2%</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$5,230</div>
+                        <div class="stat-label">Monthly Expenses</div>
+                        <span class="stat-trend negative">↑ 3.1%</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$3,220</div>
+                        <div class="stat-label">Net Cash Flow</div>
+                        <span class="stat-trend positive">↑ 8.7%</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$125K</div>
+                        <div class="stat-label">Home Equity</div>
+                        <span class="stat-trend positive">↑ 12.3%</span>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">Quick Actions</h3>
+                                <p class="card-subtitle">Get started with common tasks</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button class="btn btn-primary" onclick="showSection('upload')">📄 Upload Bank Statement</button>
+                            <button class="btn btn-secondary" onclick="showSection('mortgage')">🏠 Calculate Mortgage</button>
+                            <button class="btn btn-secondary" onclick="showSection('retirement')">🎯 Plan Retirement</button>
+                            <button class="btn btn-secondary" onclick="showSection('subscriptions')">🔄 Review Subscriptions</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Smart Insights</h3>
+                        </div>
+                        <div class="insight-card tip">
+                            <h4>💡 Potential Savings Found</h4>
+                            <p>You could save $127/month by switching car insurance. We found 3 providers with better rates.</p>
+                        </div>
+                        <div class="insight-card warning">
+                            <h4>⚠️ Subscription Alert</h4>
+                            <p>You have 3 streaming services totaling $47/month. Consider consolidating to save.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h4>📊 Spending Pattern</h4>
+                            <p>Dining out increased 23% this month compared to your 6-month average.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Statements Section -->
+            <section class="section" id="upload">
+                <header class="page-header">
+                    <h2 class="page-title">Upload Statements</h2>
+                    <p class="page-subtitle">Securely upload your bank or credit card statements for analysis</p>
+                </header>
+
+                <div class="alert alert-info" style="margin-bottom: 24px;">
+                    <span>🔒</span>
+                    <div>
+                        <strong>Your data is secure.</strong> All files are encrypted and processed locally. We never store your sensitive financial data on external servers.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Upload Documents</h3>
+                        <span class="secure-badge">🔒 Encrypted</span>
+                    </div>
+
+                    <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="Upload files by clicking or dragging">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Drag & drop files here or click to browse</div>
+                        <div class="upload-hint">Supports PDF, CSV, and OFX files up to 10MB</div>
+                        <input type="file" id="fileInput" multiple accept=".pdf,.csv,.ofx" style="display: none;">
+                    </div>
+
+                    <div style="margin-top: 24px;">
+                        <h4 style="font-weight: 600; margin-bottom: 12px;">Supported Formats:</h4>
+                        <div class="grid grid-3">
+                            <div style="padding: 16px; background: var(--off-white); border-radius: 8px;">
+                                <strong>Bank Statements</strong>
+                                <p style="font-size: 0.875rem; color: var(--dark-gray);">PDF exports from your bank</p>
+                            </div>
+                            <div style="padding: 16px; background: var(--off-white); border-radius: 8px;">
+                                <strong>Credit Card Statements</strong>
+                                <p style="font-size: 0.875rem; color: var(--dark-gray);">PDF or CSV exports</p>
+                            </div>
+                            <div style="padding: 16px; background: var(--off-white); border-radius: 8px;">
+                                <strong>Transaction Exports</strong>
+                                <p style="font-size: 0.875rem; color: var(--dark-gray);">OFX/QFX from financial apps</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="uploadedFiles" style="display: none;">
+                    <h3 class="card-title" style="margin-bottom: 16px;">Uploaded Files</h3>
+                    <div id="fileList"></div>
+                </div>
+            </section>
+
+            <!-- Cash Flow Section -->
+            <section class="section" id="cashflow">
+                <header class="page-header">
+                    <h2 class="page-title">Cash Flow Analysis</h2>
+                    <p class="page-subtitle">Understand where your money comes from and where it goes</p>
+                </header>
+
+                <div class="grid grid-3" style="margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--success);">$8,450</div>
+                        <div class="stat-label">Total Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: var(--danger);">$5,230</div>
+                        <div class="stat-label">Total Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$3,220</div>
+                        <div class="stat-label">Net Cash Flow</div>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">Income Sources</h3>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Salary</span>
+                                <span style="font-weight: 600;">$7,200 (85%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Side Business</span>
+                                <span style="font-weight: 600;">$850 (10%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 10%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Dividends</span>
+                                <span style="font-weight: 600;">$400 (5%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 5%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">Top Expense Categories</h3>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Housing (Mortgage)</span>
+                                <span style="font-weight: 600;">$2,100 (40%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Transportation</span>
+                                <span style="font-weight: 600;">$680 (13%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 13%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Groceries</span>
+                                <span style="font-weight: 600;">$620 (12%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 12%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Utilities</span>
+                                <span style="font-weight: 600;">$340 (6.5%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 6.5%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Spending Habits Section -->
+            <section class="section" id="spending">
+                <header class="page-header">
+                    <h2 class="page-title">Spending Habits</h2>
+                    <p class="page-subtitle">Track patterns and identify opportunities to optimize</p>
+                </header>
+
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 20px;">Monthly Spending by Category</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>This Month</th>
+                                    <th>Last Month</th>
+                                    <th>6-Mo Average</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Housing</td>
+                                    <td>$2,100</td>
+                                    <td>$2,100</td>
+                                    <td>$2,100</td>
+                                    <td><span class="tag tag-neutral">Stable</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Dining Out</td>
+                                    <td>$485</td>
+                                    <td>$380</td>
+                                    <td>$395</td>
+                                    <td><span class="tag tag-warning">+23%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Groceries</td>
+                                    <td>$620</td>
+                                    <td>$590</td>
+                                    <td>$580</td>
+                                    <td><span class="tag tag-warning">+7%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Transportation</td>
+                                    <td>$680</td>
+                                    <td>$720</td>
+                                    <td>$695</td>
+                                    <td><span class="tag tag-success">-6%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Entertainment</td>
+                                    <td>$245</td>
+                                    <td>$310</td>
+                                    <td>$275</td>
+                                    <td><span class="tag tag-success">-11%</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Shopping</td>
+                                    <td>$420</td>
+                                    <td>$280</td>
+                                    <td>$325</td>
+                                    <td><span class="tag tag-danger">+50%</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">Top Merchants This Month</h3>
+                        <div class="subscription-item">
+                            <div class="subscription-info">
+                                <div class="subscription-logo">🛒</div>
+                                <div>
+                                    <div class="subscription-name">Whole Foods</div>
+                                    <div class="subscription-category">Groceries</div>
+                                </div>
+                            </div>
+                            <div class="subscription-amount">$385</div>
+                        </div>
+                        <div class="subscription-item">
+                            <div class="subscription-info">
+                                <div class="subscription-logo">⛽</div>
+                                <div>
+                                    <div class="subscription-name">Shell Gas</div>
+                                    <div class="subscription-category">Transportation</div>
+                                </div>
+                            </div>
+                            <div class="subscription-amount">$280</div>
+                        </div>
+                        <div class="subscription-item">
+                            <div class="subscription-info">
+                                <div class="subscription-logo">🍕</div>
+                                <div>
+                                    <div class="subscription-name">DoorDash</div>
+                                    <div class="subscription-category">Dining Out</div>
+                                </div>
+                            </div>
+                            <div class="subscription-amount">$215</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">Spending Insights</h3>
+                        <div class="insight-card warning">
+                            <h4>⚠️ Shopping Spike</h4>
+                            <p>Shopping is up 50% from your average. Review recent purchases for any returns or unnecessary items.</p>
+                        </div>
+                        <div class="insight-card tip">
+                            <h4>💡 Great Job!</h4>
+                            <p>Transportation costs are down. Keep it up with the fuel-efficient driving habits!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subscriptions Section -->
+            <section class="section" id="subscriptions">
+                <header class="page-header">
+                    <h2 class="page-title">Subscription Tracker</h2>
+                    <p class="page-subtitle">Monitor recurring charges and find opportunities to save</p>
+                </header>
+
+                <div class="grid grid-3" style="margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div class="stat-value">$247</div>
+                        <div class="stat-label">Monthly Subscriptions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$2,964</div>
+                        <div class="stat-label">Annual Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">14</div>
+                        <div class="stat-label">Active Subscriptions</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Active Subscriptions</h3>
+                        <button class="btn btn-small btn-secondary">+ Add Manual</button>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">🎬</div>
+                            <div>
+                                <div class="subscription-name">Netflix</div>
+                                <div class="subscription-category">Entertainment • Monthly</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$15.99</div>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">🎵</div>
+                            <div>
+                                <div class="subscription-name">Spotify Family</div>
+                                <div class="subscription-category">Entertainment • Monthly</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$16.99</div>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">📦</div>
+                            <div>
+                                <div class="subscription-name">Amazon Prime</div>
+                                <div class="subscription-category">Shopping • Annual ($139/yr)</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$11.58</div>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">💪</div>
+                            <div>
+                                <div class="subscription-name">Gym Membership</div>
+                                <div class="subscription-category">Health • Monthly</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$49.99</div>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">☁️</div>
+                            <div>
+                                <div class="subscription-name">iCloud Storage</div>
+                                <div class="subscription-category">Utilities • Monthly</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$2.99</div>
+                    </div>
+
+                    <div class="subscription-item">
+                        <div class="subscription-info">
+                            <div class="subscription-logo">📰</div>
+                            <div>
+                                <div class="subscription-name">NYT Digital</div>
+                                <div class="subscription-category">News • Monthly</div>
+                            </div>
+                        </div>
+                        <div class="subscription-amount">$17.00</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 16px;">💡 Savings Opportunities</h3>
+                    <div class="insight-card tip">
+                        <h4>Streaming Bundle Opportunity</h4>
+                        <p>Netflix + Hulu + Disney+ costs $47/month separately. Consider Disney Bundle for $25/month to save $22/month ($264/year).</p>
+                    </div>
+                    <div class="insight-card warning">
+                        <h4>Unused Subscription Detected</h4>
+                        <p>Your gym membership shows no transactions for 45 days. Consider pausing or canceling to save $50/month.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Investments Section -->
+            <section class="section" id="investments">
+                <header class="page-header">
+                    <h2 class="page-title">Investment Analysis</h2>
+                    <p class="page-subtitle">Track portfolio performance and analyze investment opportunities</p>
+                </header>
+
+                <div class="grid grid-4" style="margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div class="stat-value">$145,230</div>
+                        <div class="stat-label">Portfolio Value</div>
+                        <span class="stat-trend positive">↑ 12.4% YTD</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$89,500</div>
+                        <div class="stat-label">401(k) Balance</div>
+                        <span class="stat-trend positive">↑ 8.2%</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$35,730</div>
+                        <div class="stat-label">IRA Balance</div>
+                        <span class="stat-trend positive">↑ 15.1%</span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$20,000</div>
+                        <div class="stat-label">Brokerage</div>
+                        <span class="stat-trend positive">↑ 18.6%</span>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">Asset Allocation</h3>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>US Stocks</span>
+                                <span style="font-weight: 600;">55%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 55%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>International Stocks</span>
+                                <span style="font-weight: 600;">20%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Bonds</span>
+                                <span style="font-weight: 600;">15%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 15%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Real Estate (REITs)</span>
+                                <span style="font-weight: 600;">10%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 10%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">Investment Calculator</h3>
+                        <div class="form-group">
+                            <label class="form-label">Initial Investment</label>
+                            <input type="number" class="form-input" id="invInitial" value="10000" placeholder="$10,000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Contribution</label>
+                            <input type="number" class="form-input" id="invMonthly" value="500" placeholder="$500">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Annual Return (%)</label>
+                            <input type="number" class="form-input" id="invReturn" value="7" placeholder="7%">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Time Period (Years)</label>
+                            <input type="number" class="form-input" id="invYears" value="20" placeholder="20">
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateInvestment()" style="width: 100%;">Calculate Growth</button>
+                        <div id="invResult" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mortgage & Equity Section -->
+            <section class="section" id="mortgage">
+                <header class="page-header">
+                    <h2 class="page-title">Mortgage & Home Equity</h2>
+                    <p class="page-subtitle">Understand your mortgage payments and build equity over time</p>
+                </header>
+
+                <div class="tabs">
+                    <button class="tab active" data-tab="mortgage-calc">Mortgage Calculator</button>
+                    <button class="tab" data-tab="amortization">Amortization Schedule</button>
+                    <button class="tab" data-tab="equity">Home Equity</button>
+                </div>
+
+                <div class="tab-content active" id="mortgage-calc">
+                    <div class="two-col">
+                        <div class="card">
+                            <h3 class="card-title" style="margin-bottom: 20px;">Calculate Your Mortgage</h3>
+                            <div class="form-group">
+                                <label class="form-label">Home Price</label>
+                                <input type="number" class="form-input" id="homePrice" value="400000" placeholder="$400,000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Down Payment</label>
+                                <input type="number" class="form-input" id="downPayment" value="80000" placeholder="$80,000">
+                                <p class="form-hint" id="downPaymentPercent">20% of home price</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Interest Rate (%)</label>
+                                <input type="number" class="form-input" id="interestRate" value="6.5" step="0.125" placeholder="6.5%">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Loan Term</label>
+                                <select class="form-input" id="loanTerm">
+                                    <option value="30">30 Years</option>
+                                    <option value="20">20 Years</option>
+                                    <option value="15">15 Years</option>
+                                    <option value="10">10 Years</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Property Tax (Annual)</label>
+                                <input type="number" class="form-input" id="propertyTax" value="4800" placeholder="$4,800">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Home Insurance (Annual)</label>
+                                <input type="number" class="form-input" id="homeInsurance" value="1800" placeholder="$1,800">
+                            </div>
+                            <button class="btn btn-primary" onclick="calculateMortgage()" style="width: 100%;">Calculate Payment</button>
+                        </div>
+
+                        <div>
+                            <div class="result-box" style="margin-bottom: 24px;">
+                                <div class="result-label">Monthly Payment (PITI)</div>
+                                <div class="result-value" id="monthlyPayment">$2,571</div>
+                                <div class="result-subtext">Principal, Interest, Taxes & Insurance</div>
+                            </div>
+
+                            <div class="card">
+                                <h4 style="font-weight: 600; margin-bottom: 16px;">Payment Breakdown</h4>
+                                <div style="margin-bottom: 12px; display: flex; justify-content: space-between;">
+                                    <span>Principal & Interest</span>
+                                    <span id="piPayment" style="font-weight: 600;">$2,022</span>
+                                </div>
+                                <div style="margin-bottom: 12px; display: flex; justify-content: space-between;">
+                                    <span>Property Tax</span>
+                                    <span id="taxPayment" style="font-weight: 600;">$400</span>
+                                </div>
+                                <div style="margin-bottom: 12px; display: flex; justify-content: space-between;">
+                                    <span>Home Insurance</span>
+                                    <span id="insPayment" style="font-weight: 600;">$150</span>
+                                </div>
+                                <div style="padding-top: 12px; border-top: 2px solid var(--medium-gray); display: flex; justify-content: space-between;">
+                                    <span style="font-weight: 600;">Total Interest (Life of Loan)</span>
+                                    <span id="totalInterest" style="font-weight: 600;">$407,873</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="amortization" style="display: none;">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">Amortization Schedule</h3>
+                        <p style="color: var(--dark-gray); margin-bottom: 20px;">See how your payments are split between principal and interest over time.</p>
+                        
+                        <div class="table-container">
+                            <table id="amortTable">
+                                <thead>
+                                    <tr>
+                                        <th>Year</th>
+                                        <th>Starting Balance</th>
+                                        <th>Annual Payment</th>
+                                        <th>Principal Paid</th>
+                                        <th>Interest Paid</th>
+                                        <th>Ending Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amortBody">
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="equity" style="display: none;">
+                    <div class="grid grid-3" style="margin-bottom: 24px;">
+                        <div class="stat-card">
+                            <div class="stat-value">$125,000</div>
+                            <div class="stat-label">Current Equity</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">$475,000</div>
+                            <div class="stat-label">Estimated Home Value</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">$350,000</div>
+                            <div class="stat-label">Remaining Mortgage</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">Ways to Access Your Equity</h3>
+                        <div class="insight-card">
+                            <h4>🏦 Home Equity Line of Credit (HELOC)</h4>
+                            <p>Borrow against your equity as needed. Typical rates: Prime + 0.5-2%. Good for ongoing expenses or emergencies.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h4>💵 Home Equity Loan</h4>
+                            <p>Lump-sum loan with fixed rate. Good for large, one-time expenses like renovations or debt consolidation.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h4>🔄 Cash-Out Refinance</h4>
+                            <p>Replace your mortgage with a larger one. Consider if current rates are lower than your existing rate.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rent vs Buy Section -->
+            <section class="section" id="rentbuy">
+                <header class="page-header">
+                    <h2 class="page-title">Rent vs. Own Calculator</h2>
+                    <p class="page-subtitle">Compare the true costs of renting versus buying a home</p>
+                </header>
+
+                <div class="two-col">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">🏠 Buying Scenario</h3>
+                        <div class="form-group">
+                            <label class="form-label">Home Purchase Price</label>
+                            <input type="number" class="form-input" id="buyPrice" value="400000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Down Payment (%)</label>
+                            <input type="number" class="form-input" id="buyDown" value="20">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mortgage Rate (%)</label>
+                            <input type="number" class="form-input" id="buyRate" value="6.5" step="0.125">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Annual Property Tax (%)</label>
+                            <input type="number" class="form-input" id="buyTax" value="1.2" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Appreciation (%/yr)</label>
+                            <input type="number" class="form-input" id="buyAppreciation" value="3" step="0.5">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">🏢 Renting Scenario</h3>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Rent</label>
+                            <input type="number" class="form-input" id="rentAmount" value="2200">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Annual Rent Increase (%)</label>
+                            <input type="number" class="form-input" id="rentIncrease" value="3" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Renter's Insurance (Monthly)</label>
+                            <input type="number" class="form-input" id="rentInsurance" value="25">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Investment Return on Savings (%)</label>
+                            <input type="number" class="form-input" id="rentInvReturn" value="7">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Time Period (Years)</label>
+                            <input type="number" class="form-input" id="rentYears" value="10">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large" onclick="calculateRentVsBuy()" style="width: 100%; margin: 24px 0;">Compare Rent vs. Buy</button>
+
+                <div id="rentBuyResult">
+                    <div class="grid grid-2">
+                        <div class="result-box">
+                            <div class="result-label">🏠 Buying - Net Worth Impact</div>
+                            <div class="result-value" id="buyNetWorth">$187,500</div>
+                            <div class="result-subtext">After 10 years (equity built minus costs)</div>
+                        </div>
+                        <div class="result-box">
+                            <div class="result-label">🏢 Renting - Net Worth Impact</div>
+                            <div class="result-value" id="rentNetWorth">$142,800</div>
+                            <div class="result-subtext">After 10 years (invested savings)</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <h3 class="card-title" style="margin-bottom: 16px;">📊 Analysis</h3>
+                        <div class="insight-card tip" id="rentBuyAdvice">
+                            <h4>Recommendation: Buying appears favorable</h4>
+                            <p>Based on your inputs, buying could result in ~$44,700 more net worth over 10 years. However, buying requires significant upfront capital and less flexibility to relocate.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Vehicle Calculator Section -->
+            <section class="section" id="vehicle">
+                <header class="page-header">
+                    <h2 class="page-title">Vehicle Calculator</h2>
+                    <p class="page-subtitle">Compare leasing, financing, or buying a vehicle outright</p>
+                </header>
+
+                <div class="card" style="margin-bottom: 24px;">
+                    <h3 class="card-title" style="margin-bottom: 20px;">Vehicle Information</h3>
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">Vehicle Price (MSRP)</label>
+                            <input type="number" class="form-input" id="carPrice" value="35000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Down Payment / Trade-In</label>
+                            <input type="number" class="form-input" id="carDown" value="5000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ownership Period (Years)</label>
+                            <input type="number" class="form-input" id="carYears" value="5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-3">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">💵 Buy (Cash)</h3>
+                        <p style="color: var(--dark-gray); margin-bottom: 16px;">Pay full price upfront</p>
+                        <div class="form-group">
+                            <label class="form-label">Expected Resale Value</label>
+                            <input type="number" class="form-input" id="cashResale" value="18000">
+                        </div>
+                        <div class="result-box" style="margin-top: 20px;">
+                            <div class="result-label">Total Cost of Ownership</div>
+                            <div class="result-value" id="cashTotal">$17,000</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">🏦 Finance</h3>
+                        <p style="color: var(--dark-gray); margin-bottom: 16px;">Take out an auto loan</p>
+                        <div class="form-group">
+                            <label class="form-label">Interest Rate (%)</label>
+                            <input type="number" class="form-input" id="financeRate" value="5.9" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Loan Term (Months)</label>
+                            <input type="number" class="form-input" id="financeTerm" value="60">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Resale Value</label>
+                            <input type="number" class="form-input" id="financeResale" value="18000">
+                        </div>
+                        <div class="result-box" style="margin-top: 20px;">
+                            <div class="result-label">Total Cost of Ownership</div>
+                            <div class="result-value" id="financeTotal">$21,680</div>
+                            <div class="result-subtext" id="financePayment">$517/month</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">📋 Lease</h3>
+                        <p style="color: var(--dark-gray); margin-bottom: 16px;">Monthly payments, return at end</p>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Lease Payment</label>
+                            <input type="number" class="form-input" id="leasePayment" value="399">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Lease Term (Months)</label>
+                            <input type="number" class="form-input" id="leaseTerm" value="36">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fees (Due at Signing)</label>
+                            <input type="number" class="form-input" id="leaseFees" value="2500">
+                        </div>
+                        <div class="result-box" style="margin-top: 20px;">
+                            <div class="result-label">Total Cost (One Lease)</div>
+                            <div class="result-value" id="leaseTotal">$16,864</div>
+                            <div class="result-subtext">No ownership at end</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large" onclick="calculateVehicle()" style="width: 100%; margin: 24px 0;">Calculate & Compare</button>
+
+                <div class="card" id="vehicleComparison">
+                    <h3 class="card-title" style="margin-bottom: 20px;">📊 5-Year Comparison</h3>
+                    <div class="table-container">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>💵 Buy Cash</th>
+                                    <th>🏦 Finance</th>
+                                    <th>📋 Lease</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="feature-name">Total Cost (5 years)</td>
+                                    <td id="comp5Cash" class="comparison-highlight">$17,000</td>
+                                    <td id="comp5Finance">$21,680</td>
+                                    <td id="comp5Lease">$33,728</td>
+                                </tr>
+                                <tr>
+                                    <td class="feature-name">Monthly Cost (Avg)</td>
+                                    <td id="compMonthCash">$283</td>
+                                    <td id="compMonthFinance">$361</td>
+                                    <td id="compMonthLease">$562</td>
+                                </tr>
+                                <tr>
+                                    <td class="feature-name">Ownership at End</td>
+                                    <td>✅ Yes</td>
+                                    <td>✅ Yes</td>
+                                    <td>❌ No</td>
+                                </tr>
+                                <tr>
+                                    <td class="feature-name">Flexibility</td>
+                                    <td>High</td>
+                                    <td>Medium</td>
+                                    <td>Low (mileage limits)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Retirement Planner Section -->
+            <section class="section" id="retirement">
+                <header class="page-header">
+                    <h2 class="page-title">Retirement Planner</h2>
+                    <p class="page-subtitle">Plan for a secure financial future</p>
+                </header>
+
+                <div class="two-col">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 20px;">Your Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Current Age</label>
+                            <input type="number" class="form-input" id="retCurrentAge" value="35">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Retirement Age</label>
+                            <input type="number" class="form-input" id="retRetireAge" value="65">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Life Expectancy</label>
+                            <input type="number" class="form-input" id="retLifeExpect" value="90">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Current Retirement Savings</label>
+                            <input type="number" class="form-input" id="retCurrentSavings" value="75000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Monthly Contribution</label>
+                            <input type="number" class="form-input" id="retMonthly" value="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Return (Before Retirement)</label>
+                            <input type="number" class="form-input" id="retReturnBefore" value="7" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Return (During Retirement)</label>
+                            <input type="number" class="form-input" id="retReturnDuring" value="5" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Desired Monthly Income (Today's Dollars)</label>
+                            <input type="number" class="form-input" id="retDesiredIncome" value="5000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Expected Social Security (Monthly)</label>
+                            <input type="number" class="form-input" id="retSocialSecurity" value="2000">
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateRetirement()" style="width: 100%;">Calculate Retirement</button>
+                    </div>
+
+                    <div>
+                        <div class="result-box" style="margin-bottom: 24px;">
+                            <div class="result-label">Projected Retirement Savings</div>
+                            <div class="result-value" id="retProjectedSavings">$1,425,000</div>
+                            <div class="result-subtext">At age 65</div>
+                        </div>
+
+                        <div class="grid grid-2" style="margin-bottom: 24px;">
+                            <div class="stat-card">
+                                <div class="stat-value" id="retMonthlyIncome">$7,125</div>
+                                <div class="stat-label">Monthly Income Available</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="retYearsLast">25+</div>
+                                <div class="stat-label">Years Funds Will Last</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="card-title" style="margin-bottom: 16px;">Retirement Readiness</h3>
+                            <div style="margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span>Progress to Goal</span>
+                                    <span style="font-weight: 600;" id="retProgress">142%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="retProgressBar" style="width: 100%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="insight-card tip" id="retAdvice">
+                                <h4>🎉 You're on Track!</h4>
+                                <p>Based on your current savings rate, you're projected to exceed your retirement income goal. Consider whether you want to retire earlier or increase lifestyle spending.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Savings Advice Section -->
+            <section class="section" id="savings">
+                <header class="page-header">
+                    <h2 class="page-title">Savings Advice</h2>
+                    <p class="page-subtitle">Personalized tips to help you save more money</p>
+                </header>
+
+                <div class="alert alert-success" style="margin-bottom: 24px;">
+                    <span>💰</span>
+                    <div>
+                        <strong>Potential Annual Savings: $3,840</strong><br>
+                        Based on our analysis, here are personalized recommendations to save money.
+                    </div>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">🏠 Housing</h3>
+                        <div class="insight-card tip">
+                            <h4>Refinance Opportunity</h4>
+                            <p>If rates drop below 5.5%, refinancing could save you $200+/month. Set a rate alert to monitor.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h4>Energy Audit</h4>
+                            <p>A home energy audit ($200-400) often identifies $50-150/month in utility savings through weatherization.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">🚗 Transportation</h3>
+                        <div class="insight-card tip">
+                            <h4>Insurance Shopping</h4>
+                            <p>Auto insurance rates vary by 40%+ between providers. Get 3 quotes to potentially save $127/month.</p>
+                        </div>
+                        <div class="insight-card">
+                            <h4>Gas Rewards Programs</h4>
+                            <p>Using grocery store fuel points could save $15-30/month on gas depending on driving habits.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">🛒 Shopping & Dining</h3>
+                        <div class="insight-card warning">
+                            <h4>Dining Out Budget</h4>
+                            <p>You're spending $485/month on dining vs. $395 average. Reducing by 2 meals/week saves ~$90/month.</p>
+                        </div>
+                        <div class="insight-card tip">
+                            <h4>Cashback Optimization</h4>
+                            <p>Using category-specific credit cards could earn an extra $30-50/month in cashback rewards.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">📱 Subscriptions & Bills</h3>
+                        <div class="insight-card tip">
+                            <h4>Negotiate Internet Bill</h4>
+                            <p>Call your ISP and ask about promotions. Average savings: $15-30/month with a 10-minute call.</p>
+                        </div>
+                        <div class="insight-card warning">
+                            <h4>Unused Gym Membership</h4>
+                            <p>No gym visits in 45 days. Pause or cancel to save $50/month. Consider pay-per-visit alternatives.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 24px;">
+                    <h3 class="card-title" style="margin-bottom: 16px;">💡 The 50/30/20 Rule</h3>
+                    <p style="margin-bottom: 20px; color: var(--dark-gray);">A popular budgeting framework to help balance spending and savings.</p>
+                    
+                    <div class="grid grid-3">
+                        <div style="text-align: center; padding: 20px; background: var(--off-white); border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: 700;">50%</div>
+                            <div style="font-weight: 600; margin: 8px 0;">Needs</div>
+                            <div style="font-size: 0.875rem; color: var(--dark-gray);">Housing, utilities, groceries, insurance, minimum debt payments</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: var(--off-white); border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: 700;">30%</div>
+                            <div style="font-weight: 600; margin: 8px 0;">Wants</div>
+                            <div style="font-size: 0.875rem; color: var(--dark-gray);">Dining out, entertainment, shopping, hobbies, vacations</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: var(--off-white); border-radius: 8px;">
+                            <div style="font-size: 2rem; font-weight: 700;">20%</div>
+                            <div style="font-weight: 600; margin: 8px 0;">Savings</div>
+                            <div style="font-size: 0.875rem; color: var(--dark-gray);">Emergency fund, retirement, extra debt payments, investments</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px;">
+                        <h4 style="font-weight: 600; margin-bottom: 12px;">Your Current Allocation (Based on $8,450 income)</h4>
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Needs: $3,740 (44%) <span class="tag tag-success">Good</span></span>
+                                <span>Target: $4,225</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 44%; background: var(--success);"></div></div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Wants: $1,490 (18%) <span class="tag tag-success">Good</span></span>
+                                <span>Target: $2,535</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 18%; background: var(--success);"></div></div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span>Savings: $3,220 (38%) <span class="tag tag-success">Excellent!</span></span>
+                                <span>Target: $1,690</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 38%; background: var(--success);"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Regression/Trend Analysis Section -->
+            <section class="section" id="regression">
+                <header class="page-header">
+                    <h2 class="page-title">Trend Analysis</h2>
+                    <p class="page-subtitle">Statistical analysis of your financial patterns</p>
+                </header>
+
+                <div class="card">
+                    <h3 class="card-title" style="margin-bottom: 20px;">Spending Trend Regression</h3>
+                    <p style="color: var(--dark-gray); margin-bottom: 20px;">We analyze your historical spending to predict future trends and identify patterns.</p>
+
+                    <div class="chart-container" style="margin-bottom: 24px;">
+                        <canvas id="regressionChart" style="max-width: 100%; height: 300px;"></canvas>
+                    </div>
+
+                    <div class="grid grid-3">
+                        <div class="stat-card">
+                            <div class="stat-value">+2.3%</div>
+                            <div class="stat-label">Monthly Spending Trend</div>
+                            <p style="font-size: 0.8125rem; color: var(--dark-gray); margin-top: 8px;">Your spending increases ~$120/month on average</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">0.94</div>
+                            <div class="stat-label">R² Correlation</div>
+                            <p style="font-size: 0.8125rem; color: var(--dark-gray); margin-top: 8px;">Strong predictability in your spending patterns</p>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">$5,890</div>
+                            <div class="stat-label">Predicted Next Month</div>
+                            <p style="font-size: 0.8125rem; color: var(--dark-gray); margin-top: 8px;">Based on regression analysis</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top: 24px;">
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">📈 Key Findings</h3>
+                        <div class="insight-card">
+                            <h4>Seasonal Patterns Detected</h4>
+                            <p>Your spending peaks in November-December (holidays) and dips in January-February. Plan accordingly.</p>
+                        </div>
+                        <div class="insight-card warning">
+                            <h4>Expense Creep Alert</h4>
+                            <p>Small monthly increases compound to $1,440/year in additional spending. Monitor discretionary categories.</p>
+                        </div>
+                        <div class="insight-card tip">
+                            <h4>Stable Fixed Costs</h4>
+                            <p>Your fixed expenses (housing, insurance) remain consistent. Good job on avoiding lifestyle inflation here.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">📊 Category Analysis</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Trend</th>
+                                        <th>Confidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Dining Out</td>
+                                        <td><span class="tag tag-danger">+5.2%/mo</span></td>
+                                        <td>High</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Groceries</td>
+                                        <td><span class="tag tag-warning">+2.1%/mo</span></td>
+                                        <td>High</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Transportation</td>
+                                        <td><span class="tag tag-success">-1.2%/mo</span></td>
+                                        <td>Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Entertainment</td>
+                                        <td><span class="tag tag-neutral">+0.3%/mo</span></td>
+                                        <td>Low</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Shopping</td>
+                                        <td><span class="tag tag-warning">+3.8%/mo</span></td>
+                                        <td>Medium</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Mobile Navigation Toggle -->
+    <button class="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Toggle navigation menu">
+        ☰
+    </button>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                link.removeAttribute('aria-current');
+            });
+            
+            const activeLink = document.querySelector(`[data-section="${sectionId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+                activeLink.setAttribute('aria-current', 'page');
+            }
+
+            // Close mobile nav if open
+            document.getElementById('sidebar').classList.remove('open');
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Initialize navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                showSection(link.dataset.section);
+            });
+        });
+
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabGroup = tab.parentElement;
+                const tabContentParent = tabGroup.parentElement;
+                
+                // Update tabs
+                tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update content
+                tabContentParent.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                const targetContent = document.getElementById(tab.dataset.tab);
+                if (targetContent) {
+                    targetContent.style.display = 'block';
+                }
+            });
+        });
+
+        // Mobile navigation toggle
+        function toggleMobileNav() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // File upload handling
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                fileInput.click();
+            }
+        });
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+
+        function handleFiles(files) {
+            const fileList = document.getElementById('fileList');
+            const uploadedFiles = document.getElementById('uploadedFiles');
+            
+            if (files.length > 0) {
+                uploadedFiles.style.display = 'block';
+                
+                Array.from(files).forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'subscription-item';
+                    fileItem.innerHTML = `
+                        <div class="subscription-info">
+                            <div class="subscription-logo">📄</div>
+                            <div>
+                                <div class="subscription-name">${file.name}</div>
+                                <div class="subscription-category">${(file.size / 1024).toFixed(1)} KB • Uploaded just now</div>
+                            </div>
+                        </div>
+                        <span class="tag tag-success">Analyzing...</span>
+                    `;
+                    fileList.appendChild(fileItem);
+                    
+                    // Simulate analysis completion
+                    setTimeout(() => {
+                        fileItem.querySelector('.tag').textContent = 'Analyzed ✓';
+                    }, 2000);
+                });
+            }
+        }
+
+        // Mortgage Calculator
+        function calculateMortgage() {
+            const homePrice = parseFloat(document.getElementById('homePrice').value);
+            const downPayment = parseFloat(document.getElementById('downPayment').value);
+            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100 / 12;
+            const loanTerm = parseInt(document.getElementById('loanTerm').value) * 12;
+            const propertyTax = parseFloat(document.getElementById('propertyTax').value) / 12;
+            const homeInsurance = parseFloat(document.getElementById('homeInsurance').value) / 12;
+
+            const principal = homePrice - downPayment;
+            const downPercent = ((downPayment / homePrice) * 100).toFixed(0);
+            document.getElementById('downPaymentPercent').textContent = `${downPercent}% of home price`;
+
+            // Monthly P&I payment
+            const monthlyPI = principal * (interestRate * Math.pow(1 + interestRate, loanTerm)) / (Math.pow(1 + interestRate, loanTerm) - 1);
+            
+            // Total monthly payment (PITI)
+            const totalMonthly = monthlyPI + propertyTax + homeInsurance;
+            
+            // Total interest over life of loan
+            const totalInterest = (monthlyPI * loanTerm) - principal;
+
+            document.getElementById('monthlyPayment').textContent = '$' + totalMonthly.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('piPayment').textContent = '$' + monthlyPI.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('taxPayment').textContent = '$' + propertyTax.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('insPayment').textContent = '$' + homeInsurance.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('totalInterest').textContent = '$' + totalInterest.toLocaleString('en-US', {maximumFractionDigits: 0});
+
+            // Generate amortization schedule
+            generateAmortization(principal, interestRate, loanTerm, monthlyPI);
+        }
+
+        function generateAmortization(principal, monthlyRate, totalMonths, monthlyPayment) {
+            const tbody = document.getElementById('amortBody');
+            tbody.innerHTML = '';
+            
+            let balance = principal;
+            const years = totalMonths / 12;
+            
+            for (let year = 1; year <= years; year++) {
+                const startBalance = balance;
+                let yearlyPrincipal = 0;
+                let yearlyInterest = 0;
+                
+                for (let month = 1; month <= 12; month++) {
+                    const interestPayment = balance * monthlyRate;
+                    const principalPayment = monthlyPayment - interestPayment;
+                    yearlyInterest += interestPayment;
+                    yearlyPrincipal += principalPayment;
+                    balance -= principalPayment;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${year}</td>
+                    <td>$${startBalance.toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>$${(monthlyPayment * 12).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>$${yearlyPrincipal.toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>$${yearlyInterest.toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>$${Math.max(0, balance).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        // Investment Calculator
+        function calculateInvestment() {
+            const initial = parseFloat(document.getElementById('invInitial').value);
+            const monthly = parseFloat(document.getElementById('invMonthly').value);
+            const rate = parseFloat(document.getElementById('invReturn').value) / 100;
+            const years = parseInt(document.getElementById('invYears').value);
+
+            const monthlyRate = rate / 12;
+            const months = years * 12;
+
+            // Future value formula for initial + monthly contributions
+            const futureValue = initial * Math.pow(1 + monthlyRate, months) + 
+                               monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+
+            const totalContributed = initial + (monthly * months);
+            const totalGrowth = futureValue - totalContributed;
+
+            document.getElementById('invResult').innerHTML = `
+                <div class="result-box">
+                    <div class="result-label">Future Value</div>
+                    <div class="result-value">$${futureValue.toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                    <div class="result-subtext">
+                        Total Contributed: $${totalContributed.toLocaleString('en-US', {maximumFractionDigits: 0})}<br>
+                        Investment Growth: $${totalGrowth.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Rent vs Buy Calculator
+        function calculateRentVsBuy() {
+            const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+            const buyDownPercent = parseFloat(document.getElementById('buyDown').value) / 100;
+            const buyRate = parseFloat(document.getElementById('buyRate').value) / 100;
+            const buyTaxRate = parseFloat(document.getElementById('buyTax').value) / 100;
+            const appreciation = parseFloat(document.getElementById('buyAppreciation').value) / 100;
+            
+            const rentAmount = parseFloat(document.getElementById('rentAmount').value);
+            const rentIncrease = parseFloat(document.getElementById('rentIncrease').value) / 100;
+            const rentInsurance = parseFloat(document.getElementById('rentInsurance').value);
+            const rentInvReturn = parseFloat(document.getElementById('rentInvReturn').value) / 100;
+            const years = parseInt(document.getElementById('rentYears').value);
+
+            // Buying calculations
+            const downPayment = buyPrice * buyDownPercent;
+            const loanAmount = buyPrice - downPayment;
+            const monthlyRate = buyRate / 12;
+            const totalMonths = 30 * 12;
+            const monthlyMortgage = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+            const monthlyTax = (buyPrice * buyTaxRate) / 12;
+            const monthlyBuyCost = monthlyMortgage + monthlyTax + 150; // + insurance estimate
+
+            // Home value after years
+            const futureHomeValue = buyPrice * Math.pow(1 + appreciation, years);
+            
+            // Remaining mortgage balance after years
+            let balance = loanAmount;
+            for (let m = 0; m < years * 12; m++) {
+                const interest = balance * monthlyRate;
+                const principal = monthlyMortgage - interest;
+                balance -= principal;
+            }
+            
+            const buyEquity = futureHomeValue - balance;
+            const buyCosts = downPayment + (monthlyBuyCost * 12 * years) + (buyPrice * 0.06); // closing costs on sale
+            const buyNetWorth = buyEquity - buyCosts + downPayment;
+
+            // Renting calculations
+            let totalRentPaid = 0;
+            let currentRent = rentAmount;
+            let investedSavings = downPayment; // Invest the down payment
+            
+            for (let y = 0; y < years; y++) {
+                for (let m = 0; m < 12; m++) {
+                    totalRentPaid += currentRent + rentInsurance;
+                    const monthlySavings = Math.max(0, monthlyBuyCost - currentRent - rentInsurance);
+                    investedSavings *= (1 + rentInvReturn/12);
+                    investedSavings += monthlySavings;
+                }
+                currentRent *= (1 + rentIncrease);
+            }
+
+            const rentNetWorth = investedSavings;
+
+            document.getElementById('buyNetWorth').textContent = '$' + buyNetWorth.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('rentNetWorth').textContent = '$' + rentNetWorth.toLocaleString('en-US', {maximumFractionDigits: 0});
+
+            const difference = buyNetWorth - rentNetWorth;
+            const recommendation = difference > 0 ? 'Buying' : 'Renting';
+            const adviceDiv = document.getElementById('rentBuyAdvice');
+            adviceDiv.innerHTML = `
+                <h4>Recommendation: ${recommendation} appears favorable</h4>
+                <p>Based on your inputs, ${recommendation.toLowerCase()} could result in ~$${Math.abs(difference).toLocaleString('en-US', {maximumFractionDigits: 0})} more net worth over ${years} years. ${recommendation === 'Buying' ? 'However, buying requires significant upfront capital and less flexibility to relocate.' : 'Consider that renting provides flexibility and lower upfront costs, but you won\'t build home equity.'}</p>
+            `;
+        }
+
+        // Vehicle Calculator
+        function calculateVehicle() {
+            const carPrice = parseFloat(document.getElementById('carPrice').value);
+            const carDown = parseFloat(document.getElementById('carDown').value);
+            const carYears = parseInt(document.getElementById('carYears').value);
+            
+            // Cash
+            const cashResale = parseFloat(document.getElementById('cashResale').value);
+            const cashTotal = carPrice - cashResale;
+            
+            // Finance
+            const financeRate = parseFloat(document.getElementById('financeRate').value) / 100 / 12;
+            const financeTerm = parseInt(document.getElementById('financeTerm').value);
+            const financeResale = parseFloat(document.getElementById('financeResale').value);
+            const financeAmount = carPrice - carDown;
+            const financePayment = financeAmount * (financeRate * Math.pow(1 + financeRate, financeTerm)) / (Math.pow(1 + financeRate, financeTerm) - 1);
+            const financeTotalPaid = carDown + (financePayment * financeTerm);
+            const financeTotal = financeTotalPaid - financeResale;
+            
+            // Lease
+            const leasePayment = parseFloat(document.getElementById('leasePayment').value);
+            const leaseTerm = parseInt(document.getElementById('leaseTerm').value);
+            const leaseFees = parseFloat(document.getElementById('leaseFees').value);
+            const leaseTotalOneTerm = leaseFees + (leasePayment * leaseTerm);
+            const numLeases = Math.ceil((carYears * 12) / leaseTerm);
+            const leaseTotal5Year = leaseTotalOneTerm * numLeases;
+
+            // Update displays
+            document.getElementById('cashTotal').textContent = '$' + cashTotal.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('financeTotal').textContent = '$' + financeTotal.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('financePayment').textContent = '$' + financePayment.toLocaleString('en-US', {maximumFractionDigits: 0}) + '/month';
+            document.getElementById('leaseTotal').textContent = '$' + leaseTotalOneTerm.toLocaleString('en-US', {maximumFractionDigits: 0});
+
+            // Comparison table
+            document.getElementById('comp5Cash').textContent = '$' + cashTotal.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('comp5Finance').textContent = '$' + financeTotal.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('comp5Lease').textContent = '$' + leaseTotal5Year.toLocaleString('en-US', {maximumFractionDigits: 0});
+
+            document.getElementById('compMonthCash').textContent = '$' + Math.round(cashTotal / (carYears * 12)).toLocaleString('en-US');
+            document.getElementById('compMonthFinance').textContent = '$' + Math.round(financeTotal / (carYears * 12)).toLocaleString('en-US');
+            document.getElementById('compMonthLease').textContent = '$' + Math.round(leaseTotal5Year / (carYears * 12)).toLocaleString('en-US');
+
+            // Highlight best option
+            const costs = [
+                {id: 'comp5Cash', value: cashTotal},
+                {id: 'comp5Finance', value: financeTotal},
+                {id: 'comp5Lease', value: leaseTotal5Year}
+            ];
+            costs.sort((a, b) => a.value - b.value);
+            
+            document.querySelectorAll('.comparison-table td').forEach(td => td.classList.remove('comparison-highlight'));
+            document.getElementById(costs[0].id).classList.add('comparison-highlight');
+        }
+
+        // Retirement Calculator
+        function calculateRetirement() {
+            const currentAge = parseInt(document.getElementById('retCurrentAge').value);
+            const retireAge = parseInt(document.getElementById('retRetireAge').value);
+            const lifeExpect = parseInt(document.getElementById('retLifeExpect').value);
+            const currentSavings = parseFloat(document.getElementById('retCurrentSavings').value);
+            const monthly = parseFloat(document.getElementById('retMonthly').value);
+            const returnBefore = parseFloat(document.getElementById('retReturnBefore').value) / 100;
+            const returnDuring = parseFloat(document.getElementById('retReturnDuring').value) / 100;
+            const desiredIncome = parseFloat(document.getElementById('retDesiredIncome').value);
+            const socialSecurity = parseFloat(document.getElementById('retSocialSecurity').value);
+
+            const yearsToRetire = retireAge - currentAge;
+            const yearsInRetirement = lifeExpect - retireAge;
+
+            // Growth phase
+            const monthlyReturn = returnBefore / 12;
+            const months = yearsToRetire * 12;
+            const projectedSavings = currentSavings * Math.pow(1 + monthlyReturn, months) + 
+                                    monthly * ((Math.pow(1 + monthlyReturn, months) - 1) / monthlyReturn);
+
+            // Withdrawal phase - how much can be withdrawn monthly
+            const monthlyReturnDuring = returnDuring / 12;
+            const retirementMonths = yearsInRetirement * 12;
+            const monthlyWithdrawal = projectedSavings * (monthlyReturnDuring * Math.pow(1 + monthlyReturnDuring, retirementMonths)) / (Math.pow(1 + monthlyReturnDuring, retirementMonths) - 1);
+            
+            const totalMonthlyIncome = monthlyWithdrawal + socialSecurity;
+            
+            // Progress calculation
+            const neededForGoal = (desiredIncome - socialSecurity) * ((Math.pow(1 + monthlyReturnDuring, retirementMonths) - 1) / (monthlyReturnDuring * Math.pow(1 + monthlyReturnDuring, retirementMonths)));
+            const progress = Math.min((projectedSavings / neededForGoal) * 100, 200);
+
+            document.getElementById('retProjectedSavings').textContent = '$' + projectedSavings.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('retMonthlyIncome').textContent = '$' + totalMonthlyIncome.toLocaleString('en-US', {maximumFractionDigits: 0});
+            document.getElementById('retYearsLast').textContent = yearsInRetirement + '+';
+            document.getElementById('retProgress').textContent = Math.round(progress) + '%';
+            document.getElementById('retProgressBar').style.width = Math.min(progress, 100) + '%';
+
+            const adviceDiv = document.getElementById('retAdvice');
+            if (progress >= 100) {
+                adviceDiv.className = 'insight-card tip';
+                adviceDiv.innerHTML = `
+                    <h4>🎉 You're on Track!</h4>
+                    <p>Based on your current savings rate, you're projected to exceed your retirement income goal. Consider whether you want to retire earlier or increase lifestyle spending.</p>
+                `;
+            } else if (progress >= 75) {
+                adviceDiv.className = 'insight-card';
+                adviceDiv.innerHTML = `
+                    <h4>📈 Good Progress</h4>
+                    <p>You're ${Math.round(progress)}% of the way to your goal. Consider increasing contributions by $${Math.round((100-progress)/100 * monthly)} to reach 100%.</p>
+                `;
+            } else {
+                adviceDiv.className = 'insight-card warning';
+                adviceDiv.innerHTML = `
+                    <h4>⚠️ Action Needed</h4>
+                    <p>You're ${Math.round(progress)}% of the way to your goal. Consider increasing contributions, adjusting your target retirement age, or reducing planned expenses.</p>
+                `;
+            }
+        }
+
+        // Initialize calculators with default values
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateMortgage();
+            calculateVehicle();
+            calculateRetirement();
+        });
+
+        // Format currency inputs
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+    </script>
+</body>
+</html>
