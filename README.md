@@ -1,98 +1,98 @@
 # ClearPath Finance
 
-A comprehensive personal finance dashboard built with React to help you understand cash flows, mortgages, investments, spending habits, and more.
-
-![ClearPath Finance](https://via.placeholder.com/800x400?text=ClearPath+Finance+Dashboard)
+A personal finance dashboard that stores all your data locally in your browser. No accounts, no servers, complete privacy.
 
 ## Features
 
 ### 📊 Dashboard
-- Monthly income, expenses, and net cash flow overview
-- Interactive cash flow trend charts
-- Smart insights and savings recommendations
+- Track monthly income, expenses, and net cash flow
+- Spending breakdown by category (pie chart)
+- Quick access to all tools
 
-### 📄 Statement Upload
-- Secure drag-and-drop file upload
-- Support for PDF, CSV, OFX, and QFX files
-- Automatic transaction analysis
+### 💳 Transactions
+- Add income and expenses
+- Categorize spending (Housing, Groceries, Dining, etc.)
+- Edit or delete any transaction
+- All data saved automatically
 
-### 💰 Cash Flow Analysis
-- Income vs expenses visualization
-- Spending by category breakdown
-- Monthly trend tracking
+### 🔄 Subscriptions
+- Track recurring charges (Netflix, Spotify, etc.)
+- See monthly and yearly totals
+- Identify subscriptions to cancel
 
-### 🛒 Spending Habits
-- Category-wise spending analysis
-- Historical trend comparisons
-- Pattern recognition insights
-
-### 🔄 Subscription Tracker
-- Monitor all recurring charges
-- Identify unused subscriptions
-- Find bundle savings opportunities
-
-### 📈 Investment Analysis
-- Portfolio growth visualization
-- Asset allocation charts
-- Account balance tracking
-
-### 🏠 Mortgage & Home Equity Calculator
-- Full PITI payment calculator
-- Amortization schedule
-- Equity growth projections
+### 🏠 Mortgage Calculator
+- Calculate monthly payments (PITI)
+- See total interest over loan life
+- Adjust down payment, rate, term
 
 ### 🚗 Vehicle Calculator
-- Lease vs Finance vs Buy comparison
-- Total cost of ownership analysis
-- Side-by-side comparison
+- Compare Buy vs Finance vs Lease
+- See which option costs less
+- Factor in resale value
 
 ### 🎯 Retirement Planner
-- Savings projections
-- Income replacement calculations
-- Progress tracking toward goals
-
-### 💡 Savings Advice
-- Personalized recommendations
-- 50/30/20 budgeting framework
-- Category-specific tips
+- Project future savings
+- Calculate safe withdrawal rate
+- Track progress toward goal
 
 ---
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+### 1. Install Node.js
+Download from [nodejs.org](https://nodejs.org) (version 18+)
 
-Make sure you have **Node.js** installed (version 18 or higher recommended).
-
-Check your version:
+### 2. Install Dependencies
 ```bash
-node --version
+npm install
 ```
 
-If you don't have Node.js, download it from [nodejs.org](https://nodejs.org/)
+### 3. Run the App
+```bash
+npm run dev
+```
 
-### Installation
+### 4. Open Browser
+Go to `http://localhost:3000`
 
-1. **Clone or download this repository**
+---
 
-2. **Navigate to the project folder**
-   ```bash
-   cd clearpath-finance
-   ```
+## Deploy to Vercel (Free Hosting)
 
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 1. Push to GitHub
+- Create a new repo on [github.com](https://github.com)
+- Upload all files (drag & drop works)
 
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+### 2. Connect to Vercel
+- Go to [vercel.com](https://vercel.com)
+- Sign in with GitHub
+- Import your repo
+- Click Deploy
 
-5. **Open your browser**
-   
-   The app will automatically open at `http://localhost:3000`
+Your app will be live at `https://your-project.vercel.app`
+
+---
+
+## How Data Storage Works
+
+**All data stays in your browser** using localStorage:
+
+| Data | Storage Key |
+|------|-------------|
+| User profile | `clearpath_user` |
+| Transactions | `clearpath_transactions` |
+| Subscriptions | `clearpath_subscriptions` |
+
+### Privacy
+- ✅ Data never leaves your device
+- ✅ No accounts or sign-ups
+- ✅ No tracking or analytics
+- ✅ Works offline after first load
+
+### Limitations
+- Data is per-browser (won't sync between devices)
+- Clearing browser data will delete your info
+- Use the Export feature to backup your data
 
 ---
 
@@ -100,89 +100,66 @@ If you don't have Node.js, download it from [nodejs.org](https://nodejs.org/)
 
 ```
 clearpath-finance/
-├── index.html          # HTML entry point
-├── package.json        # Dependencies and scripts
-├── vite.config.js      # Vite configuration
-├── README.md           # This file
-└── src/
-    ├── main.jsx        # React entry point
-    └── App.jsx         # Main application component
+├── index.html      # HTML entry point
+├── main.jsx        # React entry
+├── App.jsx         # Main app (all components)
+├── package.json    # Dependencies
+├── vite.config.js  # Build config
+└── .gitignore      # Git ignore rules
 ```
 
 ---
 
-## Available Scripts
+## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production (outputs to `dist/`) |
-| `npm run preview` | Preview production build locally |
-
----
-
-## Building for Production
-
-To create a production build:
-
-```bash
-npm run build
-```
-
-This creates an optimized build in the `dist/` folder that you can deploy to any static hosting service:
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3
-- Any web server
-
----
-
-## Tech Stack
-
-- **React 18** - UI framework
-- **Vite** - Build tool and dev server
-- **Recharts** - Interactive charts
-- **Lucide React** - Icon library
+| Command | What it does |
+|---------|--------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
 
 ---
 
 ## Customization
 
-### Changing Colors
+### Adding Categories
+In `App.jsx`, find the `expenseCategories` array and add your own:
 
-The app uses CSS variables defined in the `<style>` section of `App.jsx`. Key variables:
-
-```css
---bg-primary: #ffffff;      /* Main background */
---bg-secondary: #f8fafc;    /* Card backgrounds */
---text-primary: #0f172a;    /* Main text color */
---accent: #0f172a;          /* Accent/brand color */
---success: #10b981;         /* Positive indicators */
---warning: #f59e0b;         /* Warning indicators */
---danger: #ef4444;          /* Negative indicators */
+```javascript
+const expenseCategories = [
+  'Housing', 'Transportation', 'Groceries', // ... etc
+  'Your New Category',  // Add here
+];
 ```
 
-### Adding New Sections
+### Changing Colors
+Find the `:root` CSS variables in the styles section:
 
-1. Add a new nav item to the `navItems` array
-2. Create the section component
-3. Add the conditional render in the main content area
+```css
+--accent: #0f172a;      /* Main brand color */
+--success: #10b981;     /* Green (positive) */
+--danger: #ef4444;      /* Red (negative) */
+```
 
 ---
 
-## Security Note
+## Backup & Restore
 
-This app processes financial data **entirely in your browser**. No data is sent to external servers. When you upload statements, they are analyzed locally using JavaScript.
+### Export Data
+Settings → Export Data → Downloads a JSON file
+
+### Restore Data (Manual)
+Open browser console and run:
+```javascript
+const backup = { /* paste your JSON here */ };
+localStorage.setItem('clearpath_user', JSON.stringify(backup.userData));
+localStorage.setItem('clearpath_transactions', JSON.stringify(backup.transactions));
+localStorage.setItem('clearpath_subscriptions', JSON.stringify(backup.subscriptions));
+location.reload();
+```
 
 ---
 
 ## License
 
-MIT License - feel free to use this for personal or commercial projects.
-
----
-
-## Support
-
-If you have questions or need help, feel free to open an issue or reach out!
+MIT - Use freely for personal or commercial projects.
