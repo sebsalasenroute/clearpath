@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Home, Upload, TrendingUp, ShoppingCart, RefreshCw, PieChart as PieIcon, Key, Car, Target, Lightbulb, Menu, X, ChevronRight, DollarSign, Percent, Calendar, Shield, ArrowUpRight, ArrowDownRight, Plus, FileText, CreditCard, Building, Dumbbell, Check, AlertTriangle, Info, Calculator, Wallet, PiggyBank, TrendingDown, Activity, Trash2, Edit2, Save, User, Settings, Download, RotateCcw } from 'lucide-react';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Home, Upload, TrendingUp, ShoppingCart, RefreshCw, PieChart as PieIcon, Key, Car, Target, Menu, X, ChevronRight, DollarSign, Percent, Calendar, ArrowUpRight, ArrowDownRight, Plus, FileText, CreditCard, Building, Check, AlertTriangle, Calculator, Wallet, PiggyBank, TrendingDown, Activity, Trash2, Edit2, Save, User, Settings, Download, RotateCcw, CheckCircle, XCircle, HelpCircle, FileSpreadsheet } from 'lucide-react';
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -10,15 +10,200 @@ const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 };
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
+// Parse various date formats
+const parseDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleaned = dateStr.toString().trim();
+  
+  // MM/DD/YYYY
+  let match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const [, month, day, year] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  // YYYY-MM-DD
+  match = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  // MM/DD/YY
+  match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+  if (match) {
+    const [, month, day, year] = match;
+    const fullYear = parseInt(year) > 50 ? `19${year}` : `20${year}`;
+    return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  return null;
+};
+
+// Parse amount
+const parseAmount = (amountStr) => {
+  if (amountStr === null || amountStr === undefined || amountStr === '') return null;
+  if (typeof amountStr === 'number') return amountStr;
+  
+  let cleaned = amountStr.toString().trim();
+  if (!cleaned) return null;
+  
+  const isNegative = cleaned.startsWith('-') || /^\(.*\)$/.test(cleaned);
+  cleaned = cleaned.replace(/[$,\s()-]/g, '');
+  
+  const amount = parseFloat(cleaned);
+  if (isNaN(amount)) return null;
+  
+  return isNegative ? -Math.abs(amount) : amount;
+};
+
+// Smart category detection
+const detectCategory = (description) => {
+  if (!description) return 'Other';
+  const desc = description.toLowerCase();
+  
+  const patterns = {
+    'Software & SaaS': /slack|google|gsuite|openai|chatgpt|claude|windsurf|make\.com|shopify|mailgun|capture one|artiphoria|msft|microsoft|amazon web services|aws/i,
+    'Shipping': /swyftcourier|ups|fedex|canada post|cpc |shippo|purolator/i,
+    'Office & Supplies': /staples|office|indigo|juke box print/i,
+    'Food & Beverage': /dean.*milk|dairy|coffee|cafe|restaurant|food/i,
+    'Utilities & Telecom': /telus|rogers|bell|shaw|internet|phone/i,
+    'Transportation': /paybyphone|parking|gas|fuel|uber|lyft|transit/i,
+    'Professional Services': /indeed|transunion|biomedical|nova /i,
+    'Inventory & Supplies': /costco|shimano|cycles lambert|luxottica/i,
+    'Storage': /storguard|storage/i,
+    'Entertainment': /spotify|netflix|disney/i,
+    'Fees & Fines': /bylaw|fine|fee/i,
+    'Payment Received': /payment.*thank|deposit|transfer in/i,
+  };
+  
+  for (const [category, pattern] of Object.entries(patterns)) {
+    if (pattern.test(desc)) return category;
+  }
+  
+  return 'Other';
+};
+
 // ============================================
-// LOCAL STORAGE HOOKS
+// CSV PARSER - HANDLES HEADERLESS FILES
+// ============================================
+const parseCSV = (text) => {
+  const lines = text.split(/\r\n|\r|\n/).filter(line => line.trim());
+  if (lines.length === 0) return { rows: [], hasHeaders: false };
+  
+  const parseLine = (line) => {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+  
+  const rows = lines.map(line => parseLine(line));
+  
+  // Check if first row looks like headers or data
+  const firstRow = rows[0];
+  const firstCellIsDate = parseDate(firstRow[0]) !== null;
+  const hasHeaders = !firstCellIsDate;
+  
+  return { 
+    headers: hasHeaders ? firstRow : null,
+    rows: hasHeaders ? rows.slice(1) : rows,
+    hasHeaders 
+  };
+};
+
+// Detect column structure
+const detectColumns = (rows) => {
+  if (rows.length === 0) return null;
+  
+  const firstRow = rows[0];
+  const numCols = firstRow.length;
+  
+  // Common patterns:
+  // 5 cols: Date, Description, Debit, Credit, Balance (your format)
+  // 4 cols: Date, Description, Amount, Balance
+  // 3 cols: Date, Description, Amount
+  
+  const mapping = { dateCol: -1, descCol: -1, debitCol: -1, creditCol: -1, amountCol: -1 };
+  
+  // Find date column (usually first)
+  for (let i = 0; i < numCols; i++) {
+    if (parseDate(firstRow[i])) {
+      mapping.dateCol = i;
+      break;
+    }
+  }
+  
+  // For 5-column format: Date, Desc, Debit, Credit, Balance
+  if (numCols === 5) {
+    mapping.descCol = 1;
+    mapping.debitCol = 2;
+    mapping.creditCol = 3;
+    // Column 4 is balance, we don't need it
+  }
+  // For 4-column format: Date, Desc, Amount, Balance
+  else if (numCols === 4) {
+    mapping.descCol = 1;
+    mapping.amountCol = 2;
+  }
+  // For 3-column format: Date, Desc, Amount
+  else if (numCols === 3) {
+    mapping.descCol = 1;
+    mapping.amountCol = 2;
+  }
+  // Otherwise try to detect
+  else {
+    // Description is usually the longest text column
+    let maxLen = 0;
+    for (let i = 0; i < numCols; i++) {
+      if (i === mapping.dateCol) continue;
+      const avgLen = rows.slice(0, 5).reduce((sum, row) => sum + (row[i]?.length || 0), 0) / 5;
+      if (avgLen > maxLen && isNaN(parseFloat(rows[0][i]?.replace(/[$,]/g, '')))) {
+        maxLen = avgLen;
+        mapping.descCol = i;
+      }
+    }
+    
+    // Find amount column
+    for (let i = 0; i < numCols; i++) {
+      if (i === mapping.dateCol || i === mapping.descCol) continue;
+      if (parseAmount(firstRow[i]) !== null) {
+        mapping.amountCol = i;
+        break;
+      }
+    }
+  }
+  
+  return mapping;
+};
+
+// ============================================
+// LOCAL STORAGE
 // ============================================
 const useLocalStorage = (key, defaultValue) => {
   const [value, setValue] = useState(() => {
@@ -38,83 +223,318 @@ const useLocalStorage = (key, defaultValue) => {
 };
 
 // ============================================
-// DEFAULT DATA STRUCTURES
+// DEFAULT DATA
 // ============================================
-const defaultUserData = {
-  name: '',
-  setupComplete: false,
-  monthlyIncome: 0,
-  incomeSource: '',
-};
-
+const defaultUserData = { name: '', setupComplete: false, monthlyIncome: 0 };
 const defaultTransactions = [];
 const defaultSubscriptions = [];
-const defaultAccounts = [];
 
 const expenseCategories = [
-  'Housing', 'Transportation', 'Groceries', 'Dining Out', 'Utilities',
-  'Entertainment', 'Shopping', 'Healthcare', 'Insurance', 'Debt Payments',
-  'Savings', 'Investments', 'Education', 'Personal Care', 'Gifts', 'Other'
-];
-
-const subscriptionCategories = [
-  'Streaming', 'Music', 'Software', 'Gaming', 'News', 'Fitness',
-  'Cloud Storage', 'Productivity', 'Education', 'Other'
+  'Software & SaaS', 'Shipping', 'Office & Supplies', 'Food & Beverage',
+  'Utilities & Telecom', 'Transportation', 'Professional Services',
+  'Inventory & Supplies', 'Storage', 'Entertainment', 'Fees & Fines',
+  'Payment Received', 'Housing', 'Insurance', 'Healthcare', 'Other'
 ];
 
 // ============================================
 // COMPONENTS
 // ============================================
 
-// Setup Wizard for new users
-const SetupWizard = ({ onComplete }) => {
-  const [step, setStep] = useState(1);
-  const [userData, setUserData] = useState({
-    name: '',
-    monthlyIncome: '',
-    incomeSource: 'Salary',
-  });
+// Statement Upload with Fixed Parser
+const StatementUpload = ({ onImport, existingCount }) => {
+  const [parsing, setParsing] = useState(false);
+  const [error, setError] = useState(null);
+  const [parsedTransactions, setParsedTransactions] = useState([]);
+  const [selectedTransactions, setSelectedTransactions] = useState(new Set());
+  const [debugInfo, setDebugInfo] = useState(null);
 
-  const handleComplete = () => {
-    onComplete({
-      ...userData,
-      monthlyIncome: parseFloat(userData.monthlyIncome) || 0,
-      setupComplete: true,
+  const handleFileSelect = async (file) => {
+    if (!file) return;
+    
+    setError(null);
+    setDebugInfo(null);
+    setParsedTransactions([]);
+    setParsing(true);
+    
+    const fileName = file.name.toLowerCase();
+    
+    if (fileName.endsWith('.pdf')) {
+      setError('PDF files cannot be parsed. Please export your statement as CSV from your bank.');
+      setParsing(false);
+      return;
+    }
+    
+    try {
+      const text = await file.text();
+      const { rows, hasHeaders } = parseCSV(text);
+      
+      const debug = {
+        fileName,
+        totalRows: rows.length,
+        hasHeaders,
+        sampleRow: rows[0],
+        columnCount: rows[0]?.length
+      };
+      
+      if (rows.length === 0) {
+        setError('No data rows found in the file.');
+        setDebugInfo(debug);
+        setParsing(false);
+        return;
+      }
+      
+      const mapping = detectColumns(rows);
+      debug.mapping = mapping;
+      
+      // Parse transactions
+      const transactions = [];
+      
+      for (const row of rows) {
+        let amount = 0;
+        let type = 'expense';
+        
+        // Handle separate debit/credit columns
+        if (mapping.debitCol !== -1 && mapping.creditCol !== -1) {
+          const debit = parseAmount(row[mapping.debitCol]);
+          const credit = parseAmount(row[mapping.creditCol]);
+          
+          if (credit !== null && credit > 0) {
+            amount = credit;
+            type = 'income';
+          } else if (debit !== null && debit > 0) {
+            amount = debit;
+            type = 'expense';
+          } else {
+            continue; // Skip rows with no amount
+          }
+        }
+        // Handle single amount column
+        else if (mapping.amountCol !== -1) {
+          const rawAmount = parseAmount(row[mapping.amountCol]);
+          if (rawAmount === null) continue;
+          
+          amount = Math.abs(rawAmount);
+          type = rawAmount < 0 ? 'expense' : 'income';
+        }
+        else {
+          continue;
+        }
+        
+        if (amount < 0.01) continue;
+        
+        const description = row[mapping.descCol] || 'Unknown';
+        const date = parseDate(row[mapping.dateCol]) || new Date().toISOString().split('T')[0];
+        
+        transactions.push({
+          id: generateId(),
+          date,
+          description,
+          amount,
+          type,
+          category: detectCategory(description),
+        });
+      }
+      
+      debug.parsedCount = transactions.length;
+      setDebugInfo(debug);
+      
+      if (transactions.length === 0) {
+        setError('Could not parse any transactions. Check the debug info below.');
+        setParsing(false);
+        return;
+      }
+      
+      // Sort by date descending
+      transactions.sort((a, b) => b.date.localeCompare(a.date));
+      
+      setParsedTransactions(transactions);
+      setSelectedTransactions(new Set(transactions.map(t => t.id)));
+      
+    } catch (err) {
+      setError(`Error: ${err.message}`);
+    }
+    
+    setParsing(false);
+  };
+
+  const handleImport = () => {
+    const toImport = parsedTransactions.filter(t => selectedTransactions.has(t.id));
+    onImport(toImport);
+    setParsedTransactions([]);
+    setSelectedTransactions(new Set());
+  };
+
+  const toggleTransaction = (id) => {
+    setSelectedTransactions(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
     });
   };
+
+  const toggleAll = () => {
+    if (selectedTransactions.size === parsedTransactions.length) {
+      setSelectedTransactions(new Set());
+    } else {
+      setSelectedTransactions(new Set(parsedTransactions.map(t => t.id)));
+    }
+  };
+
+  const updateCategory = (id, category) => {
+    setParsedTransactions(prev => prev.map(t => t.id === id ? { ...t, category } : t));
+  };
+
+  const incomeTotal = parsedTransactions.filter(t => selectedTransactions.has(t.id) && t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expenseTotal = parsedTransactions.filter(t => selectedTransactions.has(t.id) && t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+  return (
+    <div className="upload-section">
+      {existingCount > 0 && (
+        <div className="notice info">
+          <CheckCircle size={18} />
+          You have {existingCount} existing transactions. New imports will be added.
+        </div>
+      )}
+      
+      {parsedTransactions.length === 0 && (
+        <>
+          <div className="upload-zone" 
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files[0]); }}
+            onClick={() => document.getElementById('file-input').click()}
+          >
+            <input
+              type="file"
+              id="file-input"
+              accept=".csv,.txt,.ofx,.qfx"
+              style={{ display: 'none' }}
+              onChange={(e) => handleFileSelect(e.target.files[0])}
+            />
+            
+            {parsing ? (
+              <>
+                <div className="spinner"></div>
+                <h3>Analyzing file...</h3>
+              </>
+            ) : (
+              <>
+                <div className="upload-icon"><FileSpreadsheet size={32} /></div>
+                <h3>Drop your bank statement here</h3>
+                <p>or click to browse • CSV, TXT, OFX, QFX</p>
+              </>
+            )}
+          </div>
+
+          {error && (
+            <div className="notice error">
+              <XCircle size={18} />
+              <div>
+                <strong>Error</strong>
+                <p>{error}</p>
+              </div>
+            </div>
+          )}
+
+          {debugInfo && (
+            <details className="debug-panel">
+              <summary>Debug Info (click to expand)</summary>
+              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+            </details>
+          )}
+
+          <div className="tips">
+            <h4>Supported Formats:</h4>
+            <ul>
+              <li><strong>With headers:</strong> Date, Description, Amount</li>
+              <li><strong>Without headers:</strong> Date, Description, Debit, Credit, Balance (your bank's format ✓)</li>
+            </ul>
+          </div>
+        </>
+      )}
+
+      {parsedTransactions.length > 0 && (
+        <div className="preview-panel">
+          <div className="preview-header">
+            <div>
+              <h3><CheckCircle size={20} /> Found {parsedTransactions.length} transactions</h3>
+              <p>Review and select which to import</p>
+            </div>
+            <button className="btn secondary" onClick={() => setParsedTransactions([])}>
+              <X size={16} /> Cancel
+            </button>
+          </div>
+
+          <div className="preview-toolbar">
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedTransactions.size === parsedTransactions.length}
+                onChange={toggleAll}
+              />
+              Select all ({selectedTransactions.size} selected)
+            </label>
+          </div>
+
+          <div className="preview-list">
+            {parsedTransactions.map(t => (
+              <div key={t.id} className={`preview-item ${selectedTransactions.has(t.id) ? 'selected' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={selectedTransactions.has(t.id)}
+                  onChange={() => toggleTransaction(t.id)}
+                />
+                <span className="date">{t.date}</span>
+                <span className="desc" title={t.description}>{t.description}</span>
+                <select value={t.category} onChange={(e) => updateCategory(t.id, e.target.value)}>
+                  {expenseCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span className={`amount ${t.type}`}>
+                  {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="preview-footer">
+            <div className="summary">
+              <span>Income: <strong className="income">+{formatCurrency(incomeTotal)}</strong></span>
+              <span>Expenses: <strong className="expense">-{formatCurrency(expenseTotal)}</strong></span>
+              <span>Net: <strong className={incomeTotal - expenseTotal >= 0 ? 'income' : 'expense'}>
+                {formatCurrency(incomeTotal - expenseTotal)}
+              </strong></span>
+            </div>
+            <button className="btn primary" onClick={handleImport} disabled={selectedTransactions.size === 0}>
+              <Download size={16} /> Import {selectedTransactions.size} Transactions
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Setup Wizard
+const SetupWizard = ({ onComplete }) => {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({ name: '', monthlyIncome: '' });
 
   return (
     <div className="setup-wizard">
       <div className="setup-card">
-        <div className="setup-header">
-          <h1>Welcome to ClearPath Finance</h1>
-          <p>Let's set up your personal finance dashboard</p>
-        </div>
-
-        <div className="setup-progress">
-          <div className={`progress-dot ${step >= 1 ? 'active' : ''}`}>1</div>
-          <div className={`progress-line ${step >= 2 ? 'active' : ''}`}></div>
-          <div className={`progress-dot ${step >= 2 ? 'active' : ''}`}>2</div>
-          <div className={`progress-line ${step >= 3 ? 'active' : ''}`}></div>
-          <div className={`progress-dot ${step >= 3 ? 'active' : ''}`}>3</div>
-        </div>
+        <h1>Welcome to ClearPath Finance</h1>
+        <p>Let's get you set up</p>
 
         {step === 1 && (
           <div className="setup-step">
             <h2>What's your name?</h2>
             <input
               type="text"
-              placeholder="Enter your name"
-              value={userData.name}
-              onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-              className="setup-input"
+              placeholder="Your name"
+              value={data.name}
+              onChange={(e) => setData({ ...data, name: e.target.value })}
               autoFocus
             />
-            <button
-              className="setup-btn primary"
-              onClick={() => setStep(2)}
-              disabled={!userData.name.trim()}
-            >
+            <button className="btn primary" onClick={() => setStep(2)} disabled={!data.name.trim()}>
               Continue <ChevronRight size={18} />
             </button>
           </div>
@@ -122,82 +542,59 @@ const SetupWizard = ({ onComplete }) => {
 
         {step === 2 && (
           <div className="setup-step">
-            <h2>What's your monthly income?</h2>
-            <p className="setup-hint">This helps us track your cash flow</p>
+            <h2>Monthly income? (optional)</h2>
             <div className="input-with-icon">
               <DollarSign size={20} />
               <input
                 type="number"
                 placeholder="5000"
-                value={userData.monthlyIncome}
-                onChange={(e) => setUserData({ ...userData, monthlyIncome: e.target.value })}
-                className="setup-input"
-                autoFocus
+                value={data.monthlyIncome}
+                onChange={(e) => setData({ ...data, monthlyIncome: e.target.value })}
               />
             </div>
-            <div className="setup-buttons">
-              <button className="setup-btn secondary" onClick={() => setStep(1)}>Back</button>
-              <button
-                className="setup-btn primary"
-                onClick={() => setStep(3)}
-                disabled={!userData.monthlyIncome}
-              >
-                Continue <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="setup-step">
-            <h2>Primary income source?</h2>
-            <div className="income-options">
-              {['Salary', 'Self-employed', 'Freelance', 'Investments', 'Other'].map((source) => (
-                <button
-                  key={source}
-                  className={`income-option ${userData.incomeSource === source ? 'selected' : ''}`}
-                  onClick={() => setUserData({ ...userData, incomeSource: source })}
-                >
-                  {source}
-                </button>
-              ))}
-            </div>
-            <div className="setup-buttons">
-              <button className="setup-btn secondary" onClick={() => setStep(2)}>Back</button>
-              <button className="setup-btn primary" onClick={handleComplete}>
+            <div className="btn-row">
+              <button className="btn secondary" onClick={() => setStep(1)}>Back</button>
+              <button className="btn primary" onClick={() => onComplete({ ...data, monthlyIncome: parseFloat(data.monthlyIncome) || 0, setupComplete: true })}>
                 Get Started <Check size={18} />
               </button>
             </div>
           </div>
         )}
 
-        <button className="skip-setup" onClick={() => onComplete({ ...defaultUserData, setupComplete: true })}>
-          Skip setup for now
+        <button className="skip" onClick={() => onComplete({ name: '', monthlyIncome: 0, setupComplete: true })}>
+          Skip setup
         </button>
       </div>
     </div>
   );
 };
 
-// Empty State Component
-const EmptyState = ({ icon: Icon, title, description, action, onAction }) => (
-  <div className="empty-state">
-    <div className="empty-icon">
-      <Icon size={32} />
+// Stat Card
+const StatCard = ({ title, value, icon: Icon, subtitle, trend, onClick }) => (
+  <div className={`stat-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
+    <div className="stat-header">
+      <div className="stat-icon"><Icon size={20} /></div>
+      {trend && <div className={`trend ${trend}`}>{trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}</div>}
     </div>
-    <h3>{title}</h3>
-    <p>{description}</p>
-    {action && (
-      <button className="btn primary" onClick={onAction}>
-        <Plus size={16} /> {action}
-      </button>
-    )}
+    <div className="stat-value">{value}</div>
+    <div className="stat-title">{title}</div>
+    {subtitle && <div className="stat-subtitle">{subtitle}</div>}
   </div>
 );
 
-// Transaction Form Modal
-const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
-  const [form, setForm] = useState(transaction || {
+// Empty State
+const EmptyState = ({ icon: Icon, title, description, action, onAction }) => (
+  <div className="empty-state">
+    <div className="empty-icon"><Icon size={32} /></div>
+    <h3>{title}</h3>
+    <p>{description}</p>
+    {action && <button className="btn primary" onClick={onAction}><Plus size={16} /> {action}</button>}
+  </div>
+);
+
+// Transaction Modal
+const TransactionModal = ({ isOpen, onClose, onSave, transaction }) => {
+  const [form, setForm] = useState({
     id: generateId(),
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -207,770 +604,105 @@ const TransactionModal = ({ isOpen, onClose, onSave, transaction = null }) => {
   });
 
   useEffect(() => {
-    if (transaction) {
-      setForm(transaction);
-    } else {
-      setForm({
-        id: generateId(),
-        date: new Date().toISOString().split('T')[0],
-        description: '',
-        amount: '',
-        category: 'Other',
-        type: 'expense',
-      });
-    }
+    if (transaction) setForm(transaction);
+    else setForm({
+      id: generateId(),
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      amount: '',
+      category: 'Other',
+      type: 'expense',
+    });
   }, [transaction, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ ...form, amount: parseFloat(form.amount) });
-    onClose();
-  };
-
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>{transaction ? 'Edit Transaction' : 'Add Transaction'}</h3>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+          <h3>{transaction ? 'Edit' : 'Add'} Transaction</h3>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
         </div>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => { e.preventDefault(); onSave({ ...form, amount: parseFloat(form.amount) }); onClose(); }}>
           <div className="form-group">
             <label>Type</label>
             <div className="toggle-group">
-              <button
-                type="button"
-                className={`toggle-btn ${form.type === 'expense' ? 'active' : ''}`}
-                onClick={() => setForm({ ...form, type: 'expense' })}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                className={`toggle-btn ${form.type === 'income' ? 'active' : ''}`}
-                onClick={() => setForm({ ...form, type: 'income' })}
-              >
-                Income
-              </button>
+              <button type="button" className={form.type === 'expense' ? 'active' : ''} onClick={() => setForm({ ...form, type: 'expense' })}>Expense</button>
+              <button type="button" className={form.type === 'income' ? 'active' : ''} onClick={() => setForm({ ...form, type: 'income' })}>Income</button>
             </div>
           </div>
           <div className="form-group">
             <label>Date</label>
-            <input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-              required
-            />
+            <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Description</label>
-            <input
-              type="text"
-              placeholder="e.g., Grocery shopping"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              required
-            />
+            <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Amount</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                required
-              />
-            </div>
+            <input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            >
-              {expenseCategories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              {expenseCategories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="modal-actions">
             <button type="button" className="btn secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary">
-              <Save size={16} /> Save
-            </button>
+            <button type="submit" className="btn primary"><Save size={16} /> Save</button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-};
-
-// Subscription Form Modal
-const SubscriptionModal = ({ isOpen, onClose, onSave, subscription = null }) => {
-  const [form, setForm] = useState(subscription || {
-    id: generateId(),
-    name: '',
-    amount: '',
-    category: 'Other',
-    billingCycle: 'monthly',
-    nextBilling: new Date().toISOString().split('T')[0],
-  });
-
-  useEffect(() => {
-    if (subscription) {
-      setForm(subscription);
-    } else {
-      setForm({
-        id: generateId(),
-        name: '',
-        amount: '',
-        category: 'Other',
-        billingCycle: 'monthly',
-        nextBilling: new Date().toISOString().split('T')[0],
-      });
-    }
-  }, [subscription, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({ ...form, amount: parseFloat(form.amount) });
-    onClose();
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>{subscription ? 'Edit Subscription' : 'Add Subscription'}</h3>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Service Name</label>
-            <input
-              type="text"
-              placeholder="e.g., Netflix"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Amount</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                {subscriptionCategories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Billing Cycle</label>
-              <select
-                value={form.billingCycle}
-                onChange={(e) => setForm({ ...form, billingCycle: e.target.value })}
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-                <option value="weekly">Weekly</option>
-              </select>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Next Billing Date</label>
-            <input
-              type="date"
-              value={form.nextBilling}
-              onChange={(e) => setForm({ ...form, nextBilling: e.target.value })}
-            />
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary">
-              <Save size={16} /> Save
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Income Settings Modal
-const IncomeModal = ({ isOpen, onClose, userData, onSave }) => {
-  const [income, setIncome] = useState(userData.monthlyIncome || '');
-
-  useEffect(() => {
-    setIncome(userData.monthlyIncome || '');
-  }, [userData, isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Update Monthly Income</h3>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
-        <div className="form-group">
-          <label>Monthly Income</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={income}
-              onChange={(e) => setIncome(e.target.value)}
-              placeholder="Enter your monthly income"
-            />
-          </div>
-        </div>
-        <div className="modal-actions">
-          <button className="btn secondary" onClick={onClose}>Cancel</button>
-          <button
-            className="btn primary"
-            onClick={() => {
-              onSave(parseFloat(income) || 0);
-              onClose();
-            }}
-          >
-            <Save size={16} /> Save
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Stat Card Component
-const StatCard = ({ title, value, subtitle, icon: Icon, trend, trendValue, onClick }) => (
-  <div className={`stat-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
-    <div className="stat-card-header">
-      <div className="stat-icon">
-        <Icon size={20} />
-      </div>
-      {trend && (
-        <div className={`stat-trend ${trend}`}>
-          {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {trendValue}
-        </div>
-      )}
-    </div>
-    <div className="stat-value">{value}</div>
-    <div className="stat-title">{title}</div>
-    {subtitle && <div className="stat-subtitle">{subtitle}</div>}
-  </div>
-);
-
-// Mortgage Calculator Component
-const MortgageCalculator = () => {
-  const [inputs, setInputs] = useState({
-    homePrice: 400000,
-    downPayment: 80000,
-    interestRate: 6.5,
-    loanTerm: 30,
-    propertyTax: 4800,
-    insurance: 1800,
-  });
-
-  const results = useMemo(() => {
-    const principal = inputs.homePrice - inputs.downPayment;
-    const monthlyRate = inputs.interestRate / 100 / 12;
-    const numPayments = inputs.loanTerm * 12;
-
-    if (monthlyRate === 0) {
-      return {
-        monthlyPayment: principal / numPayments + inputs.propertyTax / 12 + inputs.insurance / 12,
-        principalInterest: principal / numPayments,
-        taxes: inputs.propertyTax / 12,
-        insurance: inputs.insurance / 12,
-        totalInterest: 0,
-      };
-    }
-
-    const monthlyPI = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
-    const totalMonthly = monthlyPI + inputs.propertyTax / 12 + inputs.insurance / 12;
-    const totalInterest = (monthlyPI * numPayments) - principal;
-
-    return {
-      monthlyPayment: totalMonthly,
-      principalInterest: monthlyPI,
-      taxes: inputs.propertyTax / 12,
-      insurance: inputs.insurance / 12,
-      totalInterest,
-    };
-  }, [inputs]);
-
-  return (
-    <div className="calculator-section">
-      <div className="calculator-inputs">
-        <div className="form-group">
-          <label>Home Price</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={inputs.homePrice}
-              onChange={(e) => setInputs({ ...inputs, homePrice: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Down Payment</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={inputs.downPayment}
-              onChange={(e) => setInputs({ ...inputs, downPayment: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <span className="input-hint">
-            {inputs.homePrice > 0 ? `${((inputs.downPayment / inputs.homePrice) * 100).toFixed(0)}% down` : ''}
-          </span>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Interest Rate (%)</label>
-            <input
-              type="number"
-              step="0.125"
-              value={inputs.interestRate}
-              onChange={(e) => setInputs({ ...inputs, interestRate: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Loan Term</label>
-            <select
-              value={inputs.loanTerm}
-              onChange={(e) => setInputs({ ...inputs, loanTerm: parseInt(e.target.value) })}
-            >
-              <option value={30}>30 years</option>
-              <option value={20}>20 years</option>
-              <option value={15}>15 years</option>
-            </select>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Annual Property Tax</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.propertyTax}
-                onChange={(e) => setInputs({ ...inputs, propertyTax: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Annual Insurance</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.insurance}
-                onChange={(e) => setInputs({ ...inputs, insurance: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="calculator-results">
-        <div className="result-hero">
-          <span className="result-label">Monthly Payment</span>
-          <span className="result-value">{formatCurrency(results.monthlyPayment)}</span>
-          <span className="result-subtitle">Principal, Interest, Taxes & Insurance</span>
-        </div>
-        <div className="result-breakdown">
-          <div className="breakdown-item">
-            <span>Principal & Interest</span>
-            <span>{formatCurrency(results.principalInterest)}</span>
-          </div>
-          <div className="breakdown-item">
-            <span>Property Tax</span>
-            <span>{formatCurrency(results.taxes)}</span>
-          </div>
-          <div className="breakdown-item">
-            <span>Insurance</span>
-            <span>{formatCurrency(results.insurance)}</span>
-          </div>
-          <div className="breakdown-divider"></div>
-          <div className="breakdown-item total">
-            <span>Total Interest (Life of Loan)</span>
-            <span>{formatCurrency(results.totalInterest)}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Vehicle Calculator Component
-const VehicleCalculator = () => {
-  const [inputs, setInputs] = useState({
-    vehiclePrice: 35000,
-    downPayment: 5000,
-    loanRate: 6.5,
-    loanTerm: 60,
-    leasePayment: 400,
-    leaseTerm: 36,
-    leaseDownPayment: 2000,
-    expectedResale: 18000,
-  });
-
-  const results = useMemo(() => {
-    // Cash purchase
-    const cashTotal = inputs.vehiclePrice;
-    const cashNetCost = cashTotal - inputs.expectedResale;
-
-    // Financing
-    const loanAmount = inputs.vehiclePrice - inputs.downPayment;
-    const monthlyRate = inputs.loanRate / 100 / 12;
-    const financePayment = monthlyRate > 0
-      ? loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, inputs.loanTerm)) / (Math.pow(1 + monthlyRate, inputs.loanTerm) - 1)
-      : loanAmount / inputs.loanTerm;
-    const financeTotal = inputs.downPayment + (financePayment * inputs.loanTerm);
-    const financeNetCost = financeTotal - inputs.expectedResale;
-
-    // Leasing (for same period as loan)
-    const numLeases = Math.ceil(inputs.loanTerm / inputs.leaseTerm);
-    const leaseTotal = (inputs.leaseDownPayment + (inputs.leasePayment * inputs.leaseTerm)) * numLeases;
-
-    return {
-      cash: { total: cashTotal, netCost: cashNetCost },
-      finance: { payment: financePayment, total: financeTotal, netCost: financeNetCost },
-      lease: { total: leaseTotal, numLeases },
-    };
-  }, [inputs]);
-
-  const bestOption = results.cash.netCost <= results.finance.netCost && results.cash.netCost <= results.lease.total
-    ? 'cash'
-    : results.finance.netCost <= results.lease.total ? 'finance' : 'lease';
-
-  return (
-    <div className="calculator-section">
-      <div className="calculator-inputs">
-        <div className="form-group">
-          <label>Vehicle Price</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={inputs.vehiclePrice}
-              onChange={(e) => setInputs({ ...inputs, vehiclePrice: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Down Payment (Buy/Finance)</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.downPayment}
-                onChange={(e) => setInputs({ ...inputs, downPayment: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Expected Resale Value</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.expectedResale}
-                onChange={(e) => setInputs({ ...inputs, expectedResale: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Loan Rate (%)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={inputs.loanRate}
-              onChange={(e) => setInputs({ ...inputs, loanRate: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Loan Term (months)</label>
-            <input
-              type="number"
-              value={inputs.loanTerm}
-              onChange={(e) => setInputs({ ...inputs, loanTerm: parseInt(e.target.value) || 60 })}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Lease Payment/Month</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.leasePayment}
-                onChange={(e) => setInputs({ ...inputs, leasePayment: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Lease Term (months)</label>
-            <input
-              type="number"
-              value={inputs.leaseTerm}
-              onChange={(e) => setInputs({ ...inputs, leaseTerm: parseInt(e.target.value) || 36 })}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="vehicle-comparison">
-        <div className={`vehicle-option ${bestOption === 'cash' ? 'best' : ''}`}>
-          <h4><Wallet size={18} /> Buy Cash</h4>
-          {bestOption === 'cash' && <span className="best-badge">Best Value</span>}
-          <div className="option-amount">{formatCurrency(results.cash.netCost)}</div>
-          <div className="option-label">Net cost after resale</div>
-        </div>
-        <div className={`vehicle-option ${bestOption === 'finance' ? 'best' : ''}`}>
-          <h4><Building size={18} /> Finance</h4>
-          {bestOption === 'finance' && <span className="best-badge">Best Value</span>}
-          <div className="option-amount">{formatCurrency(results.finance.netCost)}</div>
-          <div className="option-label">{formatCurrency(results.finance.payment)}/mo for {inputs.loanTerm} mo</div>
-        </div>
-        <div className={`vehicle-option ${bestOption === 'lease' ? 'best' : ''}`}>
-          <h4><Key size={18} /> Lease</h4>
-          {bestOption === 'lease' && <span className="best-badge">Best Value</span>}
-          <div className="option-amount">{formatCurrency(results.lease.total)}</div>
-          <div className="option-label">{results.lease.numLeases} lease(s), no ownership</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Retirement Calculator Component
-const RetirementCalculator = () => {
-  const [inputs, setInputs] = useState({
-    currentAge: 30,
-    retirementAge: 65,
-    currentSavings: 50000,
-    monthlyContribution: 500,
-    expectedReturn: 7,
-    desiredIncome: 5000,
-  });
-
-  const results = useMemo(() => {
-    const yearsToRetirement = inputs.retirementAge - inputs.currentAge;
-    const monthlyReturn = inputs.expectedReturn / 100 / 12;
-    const months = yearsToRetirement * 12;
-
-    const futureValue = inputs.currentSavings * Math.pow(1 + monthlyReturn, months) +
-      inputs.monthlyContribution * ((Math.pow(1 + monthlyReturn, months) - 1) / monthlyReturn);
-
-    // Using 4% safe withdrawal rate
-    const annualWithdrawal = futureValue * 0.04;
-    const monthlyWithdrawal = annualWithdrawal / 12;
-
-    const progress = (monthlyWithdrawal / inputs.desiredIncome) * 100;
-
-    return {
-      futureValue,
-      monthlyWithdrawal,
-      progress: Math.min(progress, 100),
-      yearsToRetirement,
-    };
-  }, [inputs]);
-
-  return (
-    <div className="calculator-section">
-      <div className="calculator-inputs">
-        <div className="form-row">
-          <div className="form-group">
-            <label>Current Age</label>
-            <input
-              type="number"
-              value={inputs.currentAge}
-              onChange={(e) => setInputs({ ...inputs, currentAge: parseInt(e.target.value) || 0 })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Retirement Age</label>
-            <input
-              type="number"
-              value={inputs.retirementAge}
-              onChange={(e) => setInputs({ ...inputs, retirementAge: parseInt(e.target.value) || 65 })}
-            />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Current Retirement Savings</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={inputs.currentSavings}
-              onChange={(e) => setInputs({ ...inputs, currentSavings: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-        </div>
-        <div className="form-group">
-          <label>Monthly Contribution</label>
-          <div className="input-with-icon">
-            <DollarSign size={16} />
-            <input
-              type="number"
-              value={inputs.monthlyContribution}
-              onChange={(e) => setInputs({ ...inputs, monthlyContribution: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Expected Return (%)</label>
-            <input
-              type="number"
-              step="0.5"
-              value={inputs.expectedReturn}
-              onChange={(e) => setInputs({ ...inputs, expectedReturn: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-          <div className="form-group">
-            <label>Desired Monthly Income</label>
-            <div className="input-with-icon">
-              <DollarSign size={16} />
-              <input
-                type="number"
-                value={inputs.desiredIncome}
-                onChange={(e) => setInputs({ ...inputs, desiredIncome: parseFloat(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="calculator-results">
-        <div className="result-hero">
-          <span className="result-label">Projected Savings at {inputs.retirementAge}</span>
-          <span className="result-value">{formatCurrency(results.futureValue)}</span>
-          <span className="result-subtitle">{results.yearsToRetirement} years to grow</span>
-        </div>
-        <div className="retirement-stats">
-          <div className="retirement-stat">
-            <span className="stat-number">{formatCurrency(results.monthlyWithdrawal)}</span>
-            <span className="stat-label">Monthly income (4% rule)</span>
-          </div>
-          <div className="retirement-stat">
-            <span className="stat-number">{results.progress.toFixed(0)}%</span>
-            <span className="stat-label">Of your goal</span>
-          </div>
-        </div>
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${results.progress}%` }}
-            ></div>
-          </div>
-          <div className={`progress-status ${results.progress >= 100 ? 'success' : 'warning'}`}>
-            {results.progress >= 100 ? (
-              <><Check size={16} /> On track to meet your goal!</>
-            ) : (
-              <><AlertTriangle size={16} /> Consider increasing contributions</>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
 // ============================================
-// MAIN APP COMPONENT
+// MAIN APP
 // ============================================
 export default function ClearPathFinance() {
-  // State
   const [userData, setUserData] = useLocalStorage('clearpath_user', defaultUserData);
   const [transactions, setTransactions] = useLocalStorage('clearpath_transactions', defaultTransactions);
   const [subscriptions, setSubscriptions] = useLocalStorage('clearpath_subscriptions', defaultSubscriptions);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [editingSubscription, setEditingSubscription] = useState(null);
+  const [importSuccess, setImportSuccess] = useState(null);
 
-  // Computed values
   const currentMonth = new Date().toISOString().slice(0, 7);
   
   const monthlyData = useMemo(() => {
-    const thisMonthTransactions = transactions.filter(t => t.date?.startsWith(currentMonth));
-    const expenses = thisMonthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const income = thisMonthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || userData.monthlyIncome;
-    const subscriptionTotal = subscriptions.reduce((sum, s) => {
-      if (s.billingCycle === 'yearly') return sum + s.amount / 12;
-      if (s.billingCycle === 'weekly') return sum + s.amount * 4;
-      return sum + s.amount;
-    }, 0);
-    
-    return {
-      income,
-      expenses: expenses + subscriptionTotal,
-      netCashFlow: income - expenses - subscriptionTotal,
-      subscriptionTotal,
-    };
-  }, [transactions, subscriptions, userData.monthlyIncome, currentMonth]);
+    const thisMonth = transactions.filter(t => t.date?.startsWith(currentMonth));
+    const expenses = thisMonth.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
+    const income = thisMonth.filter(t => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0) || userData.monthlyIncome;
+    return { income, expenses, netCashFlow: income - expenses };
+  }, [transactions, userData.monthlyIncome, currentMonth]);
 
   const expensesByCategory = useMemo(() => {
-    const thisMonthExpenses = transactions.filter(t => t.date?.startsWith(currentMonth) && t.type === 'expense');
+    const thisMonth = transactions.filter(t => t.date?.startsWith(currentMonth) && t.type === 'expense');
     const grouped = {};
-    thisMonthExpenses.forEach(t => {
-      grouped[t.category] = (grouped[t.category] || 0) + t.amount;
-    });
-    return Object.entries(grouped)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+    thisMonth.forEach(t => { grouped[t.category] = (grouped[t.category] || 0) + t.amount; });
+    return Object.entries(grouped).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [transactions, currentMonth]);
 
-  const chartColors = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1'];
+  const chartColors = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
 
-  // Handlers
-  const handleSaveTransaction = (transaction) => {
+  const handleImportTransactions = (newTxns) => {
+    setTransactions(prev => [...prev, ...newTxns]);
+    setImportSuccess(`Imported ${newTxns.length} transactions!`);
+    setTimeout(() => setImportSuccess(null), 4000);
+    setActiveSection('transactions');
+  };
+
+  const handleSaveTransaction = (txn) => {
     if (editingTransaction) {
-      setTransactions(transactions.map(t => t.id === transaction.id ? transaction : t));
+      setTransactions(transactions.map(t => t.id === txn.id ? txn : t));
     } else {
-      setTransactions([...transactions, transaction]);
+      setTransactions([...transactions, txn]);
     }
     setEditingTransaction(null);
   };
@@ -979,53 +711,30 @@ export default function ClearPathFinance() {
     setTransactions(transactions.filter(t => t.id !== id));
   };
 
-  const handleSaveSubscription = (subscription) => {
-    if (editingSubscription) {
-      setSubscriptions(subscriptions.map(s => s.id === subscription.id ? subscription : s));
-    } else {
-      setSubscriptions([...subscriptions, subscription]);
-    }
-    setEditingSubscription(null);
-  };
-
-  const handleDeleteSubscription = (id) => {
-    setSubscriptions(subscriptions.filter(s => s.id !== id));
+  const handleExportData = () => {
+    const data = { userData, transactions, subscriptions, exportDate: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `clearpath-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
   };
 
   const handleResetData = () => {
-    if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+    if (confirm('Delete ALL data? This cannot be undone.')) {
       localStorage.clear();
       window.location.reload();
     }
   };
 
-  const handleExportData = () => {
-    const data = { userData, transactions, subscriptions };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'clearpath-finance-backup.json';
-    a.click();
-  };
-
-  // Show setup wizard for new users
   if (!userData.setupComplete) {
-    return (
-      <>
-        <style>{styles}</style>
-        <SetupWizard onComplete={setUserData} />
-      </>
-    );
+    return <><style>{styles}</style><SetupWizard onComplete={setUserData} /></>;
   }
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'transactions', label: 'Transactions', icon: CreditCard },
-    { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCw },
-    { id: 'mortgage', label: 'Mortgage Calculator', icon: Building },
-    { id: 'vehicle', label: 'Vehicle Calculator', icon: Car },
-    { id: 'retirement', label: 'Retirement Planner', icon: Target },
+    { id: 'upload', label: 'Import Statement', icon: Upload },
+    { id: 'transactions', label: 'Transactions', icon: CreditCard, badge: transactions.length },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -1033,204 +742,130 @@ export default function ClearPathFinance() {
     <>
       <style>{styles}</style>
       <div className="app">
-        {/* Sidebar */}
         <nav className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
           <div className="logo">
             <h1>ClearPath</h1>
-            <span>Personal Finance</span>
+            <span>Finance</span>
           </div>
-
-          <div className="user-greeting">
-            <User size={18} />
-            <span>Hi, {userData.name || 'there'}!</span>
-          </div>
-
+          <div className="greeting"><User size={18} /> Hi, {userData.name || 'there'}!</div>
           <ul className="nav-list">
             {navItems.map(item => (
               <li key={item.id}>
-                <button
-                  className={`nav-link ${activeSection === item.id ? 'active' : ''}`}
-                  onClick={() => { setActiveSection(item.id); setMobileMenuOpen(false); }}
-                >
-                  <item.icon size={18} />
-                  {item.label}
+                <button className={`nav-link ${activeSection === item.id ? 'active' : ''}`} onClick={() => { setActiveSection(item.id); setMobileMenuOpen(false); }}>
+                  <item.icon size={18} /> {item.label}
+                  {item.badge > 0 && <span className="badge">{item.badge}</span>}
                 </button>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Mobile menu button */}
-        <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+        <button className="mobile-menu" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Main content */}
-        <main className="main-content">
-          {/* Dashboard */}
+        <main className="main">
+          {importSuccess && <div className="toast success"><CheckCircle size={18} /> {importSuccess}</div>}
+
           {activeSection === 'dashboard' && (
             <>
               <header className="page-header">
                 <h2>Dashboard</h2>
-                <p>Your financial overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                <p>{transactions.length} transactions</p>
               </header>
 
               <div className="stats-grid">
-                <StatCard
-                  title="Monthly Income"
-                  value={formatCurrency(monthlyData.income)}
-                  icon={TrendingUp}
-                  onClick={() => setShowIncomeModal(true)}
-                  subtitle="Click to update"
-                />
-                <StatCard
-                  title="Monthly Expenses"
-                  value={formatCurrency(monthlyData.expenses)}
-                  icon={ShoppingCart}
-                />
-                <StatCard
-                  title="Net Cash Flow"
-                  value={formatCurrency(monthlyData.netCashFlow)}
-                  icon={DollarSign}
-                  trend={monthlyData.netCashFlow >= 0 ? 'up' : 'down'}
-                />
-                <StatCard
-                  title="Subscriptions"
-                  value={formatCurrency(monthlyData.subscriptionTotal)}
-                  icon={RefreshCw}
-                  subtitle={`${subscriptions.length} active`}
-                />
+                <StatCard title="Income" value={formatCurrency(monthlyData.income)} icon={TrendingUp} />
+                <StatCard title="Expenses" value={formatCurrency(monthlyData.expenses)} icon={ShoppingCart} />
+                <StatCard title="Net" value={formatCurrency(monthlyData.netCashFlow)} icon={DollarSign} trend={monthlyData.netCashFlow >= 0 ? 'up' : 'down'} />
               </div>
 
-              <div className="dashboard-grid">
+              <div className="grid-2">
                 <div className="card">
-                  <div className="card-header">
-                    <h3>Spending by Category</h3>
-                  </div>
+                  <h3>Spending by Category</h3>
                   {expensesByCategory.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
-                        <Pie
-                          data={expensesByCategory}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          labelLine={false}
-                        >
-                          {expensesByCategory.map((entry, index) => (
-                            <Cell key={entry.name} fill={chartColors[index % chartColors.length]} />
-                          ))}
+                        <Pie data={expensesByCategory} cx="50%" cy="50%" innerRadius={45} outerRadius={85} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                          {expensesByCategory.map((e, i) => <Cell key={e.name} fill={chartColors[i % chartColors.length]} />)}
                         </Pie>
-                        <Tooltip formatter={(v) => formatCurrency(v)} />
+                        <Tooltip formatter={v => formatCurrency(v)} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <EmptyState
-                      icon={PieIcon}
-                      title="No expenses yet"
-                      description="Add transactions to see your spending breakdown"
-                      action="Add Transaction"
-                      onAction={() => { setEditingTransaction(null); setShowTransactionModal(true); }}
-                    />
+                    <EmptyState icon={PieIcon} title="No data" description="Import transactions to see spending" action="Import" onAction={() => setActiveSection('upload')} />
                   )}
                 </div>
 
                 <div className="card">
-                  <div className="card-header">
-                    <h3>Quick Actions</h3>
-                  </div>
+                  <h3>Quick Actions</h3>
                   <div className="quick-actions">
-                    <button className="quick-action" onClick={() => { setEditingTransaction(null); setShowTransactionModal(true); }}>
-                      <Plus size={18} /> Add Transaction
-                    </button>
-                    <button className="quick-action" onClick={() => { setEditingSubscription(null); setShowSubscriptionModal(true); }}>
-                      <Plus size={18} /> Add Subscription
-                    </button>
-                    <button className="quick-action" onClick={() => setActiveSection('mortgage')}>
-                      <Calculator size={18} /> Mortgage Calculator
-                    </button>
-                    <button className="quick-action" onClick={() => setActiveSection('retirement')}>
-                      <Target size={18} /> Retirement Planner
-                    </button>
+                    <button onClick={() => setActiveSection('upload')}><Upload size={18} /> Import Statement</button>
+                    <button onClick={() => { setEditingTransaction(null); setShowTransactionModal(true); }}><Plus size={18} /> Add Transaction</button>
                   </div>
                 </div>
+              </div>
 
-                <div className="card full-width">
-                  <div className="card-header">
-                    <h3>Recent Transactions</h3>
-                    <button className="btn small" onClick={() => setActiveSection('transactions')}>
-                      View All
-                    </button>
-                  </div>
-                  {transactions.length > 0 ? (
-                    <div className="transaction-list">
-                      {transactions.slice(-5).reverse().map(t => (
-                        <div key={t.id} className="transaction-item">
-                          <div className="transaction-info">
-                            <span className="transaction-desc">{t.description}</span>
-                            <span className="transaction-meta">{t.category} • {t.date}</span>
-                          </div>
-                          <span className={`transaction-amount ${t.type}`}>
-                            {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={CreditCard}
-                      title="No transactions yet"
-                      description="Start tracking your spending by adding transactions"
-                      action="Add Transaction"
-                      onAction={() => { setEditingTransaction(null); setShowTransactionModal(true); }}
-                    />
-                  )}
+              <div className="card">
+                <div className="card-header">
+                  <h3>Recent Transactions</h3>
+                  <button className="btn small" onClick={() => setActiveSection('transactions')}>View All</button>
                 </div>
+                {transactions.length > 0 ? (
+                  <div className="txn-list">
+                    {transactions.slice(-8).reverse().map(t => (
+                      <div key={t.id} className="txn-item">
+                        <div className="txn-info">
+                          <span className="txn-desc">{t.description}</span>
+                          <span className="txn-meta">{t.category} • {t.date}</span>
+                        </div>
+                        <span className={`txn-amount ${t.type}`}>{t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={CreditCard} title="No transactions" description="Import a statement to get started" action="Import" onAction={() => setActiveSection('upload')} />
+                )}
               </div>
             </>
           )}
 
-          {/* Transactions */}
+          {activeSection === 'upload' && (
+            <>
+              <header className="page-header">
+                <h2>Import Statement</h2>
+                <p>Upload your bank statement (CSV format)</p>
+              </header>
+              <StatementUpload onImport={handleImportTransactions} existingCount={transactions.length} />
+            </>
+          )}
+
           {activeSection === 'transactions' && (
             <>
               <header className="page-header">
                 <div>
                   <h2>Transactions</h2>
-                  <p>Track your income and expenses</p>
+                  <p>{transactions.length} total</p>
                 </div>
-                <button className="btn primary" onClick={() => { setEditingTransaction(null); setShowTransactionModal(true); }}>
-                  <Plus size={16} /> Add Transaction
-                </button>
+                <div className="header-actions">
+                  <button className="btn secondary" onClick={() => setActiveSection('upload')}><Upload size={16} /> Import</button>
+                  <button className="btn primary" onClick={() => { setEditingTransaction(null); setShowTransactionModal(true); }}><Plus size={16} /> Add</button>
+                </div>
               </header>
 
               {transactions.length > 0 ? (
                 <div className="card">
-                  <div className="transaction-list">
-                    {[...transactions].reverse().map(t => (
-                      <div key={t.id} className="transaction-item">
-                        <div className="transaction-info">
-                          <span className="transaction-desc">{t.description}</span>
-                          <span className="transaction-meta">{t.category} • {t.date}</span>
+                  <div className="txn-list">
+                    {[...transactions].sort((a, b) => b.date.localeCompare(a.date)).map(t => (
+                      <div key={t.id} className="txn-item">
+                        <div className="txn-info">
+                          <span className="txn-desc">{t.description}</span>
+                          <span className="txn-meta">{t.category} • {t.date}</span>
                         </div>
-                        <div className="transaction-actions">
-                          <span className={`transaction-amount ${t.type}`}>
-                            {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
-                          </span>
-                          <button
-                            className="icon-btn"
-                            onClick={() => { setEditingTransaction(t); setShowTransactionModal(true); }}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="icon-btn danger"
-                            onClick={() => handleDeleteTransaction(t.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="txn-actions">
+                          <span className={`txn-amount ${t.type}`}>{t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}</span>
+                          <button className="icon-btn" onClick={() => { setEditingTransaction(t); setShowTransactionModal(true); }}><Edit2 size={16} /></button>
+                          <button className="icon-btn danger" onClick={() => handleDeleteTransaction(t.id)}><Trash2 size={16} /></button>
                         </div>
                       </div>
                     ))}
@@ -1238,207 +873,35 @@ export default function ClearPathFinance() {
                 </div>
               ) : (
                 <div className="card">
-                  <EmptyState
-                    icon={CreditCard}
-                    title="No transactions yet"
-                    description="Start tracking your spending by adding your first transaction"
-                    action="Add Transaction"
-                    onAction={() => { setEditingTransaction(null); setShowTransactionModal(true); }}
-                  />
+                  <EmptyState icon={CreditCard} title="No transactions" description="Import a statement" action="Import" onAction={() => setActiveSection('upload')} />
                 </div>
               )}
             </>
           )}
 
-          {/* Subscriptions */}
-          {activeSection === 'subscriptions' && (
-            <>
-              <header className="page-header">
-                <div>
-                  <h2>Subscriptions</h2>
-                  <p>Manage your recurring charges</p>
-                </div>
-                <button className="btn primary" onClick={() => { setEditingSubscription(null); setShowSubscriptionModal(true); }}>
-                  <Plus size={16} /> Add Subscription
-                </button>
-              </header>
-
-              <div className="stats-grid small">
-                <StatCard
-                  title="Monthly Total"
-                  value={formatCurrency(monthlyData.subscriptionTotal)}
-                  icon={RefreshCw}
-                />
-                <StatCard
-                  title="Yearly Total"
-                  value={formatCurrency(monthlyData.subscriptionTotal * 12)}
-                  icon={Calendar}
-                />
-                <StatCard
-                  title="Active Subscriptions"
-                  value={subscriptions.length.toString()}
-                  icon={Activity}
-                />
-              </div>
-
-              {subscriptions.length > 0 ? (
-                <div className="card">
-                  <div className="subscription-list">
-                    {subscriptions.map(s => (
-                      <div key={s.id} className="subscription-item">
-                        <div className="subscription-info">
-                          <span className="subscription-name">{s.name}</span>
-                          <span className="subscription-meta">{s.category} • {s.billingCycle}</span>
-                        </div>
-                        <div className="subscription-actions">
-                          <span className="subscription-amount">{formatCurrency(s.amount)}</span>
-                          <button
-                            className="icon-btn"
-                            onClick={() => { setEditingSubscription(s); setShowSubscriptionModal(true); }}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="icon-btn danger"
-                            onClick={() => handleDeleteSubscription(s.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="card">
-                  <EmptyState
-                    icon={RefreshCw}
-                    title="No subscriptions yet"
-                    description="Add your recurring charges to track them"
-                    action="Add Subscription"
-                    onAction={() => { setEditingSubscription(null); setShowSubscriptionModal(true); }}
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Mortgage Calculator */}
-          {activeSection === 'mortgage' && (
-            <>
-              <header className="page-header">
-                <h2>Mortgage Calculator</h2>
-                <p>Calculate your monthly mortgage payments</p>
-              </header>
-              <div className="card">
-                <MortgageCalculator />
-              </div>
-            </>
-          )}
-
-          {/* Vehicle Calculator */}
-          {activeSection === 'vehicle' && (
-            <>
-              <header className="page-header">
-                <h2>Vehicle Calculator</h2>
-                <p>Compare buying, financing, or leasing a vehicle</p>
-              </header>
-              <div className="card">
-                <VehicleCalculator />
-              </div>
-            </>
-          )}
-
-          {/* Retirement Calculator */}
-          {activeSection === 'retirement' && (
-            <>
-              <header className="page-header">
-                <h2>Retirement Planner</h2>
-                <p>Plan for your financial future</p>
-              </header>
-              <div className="card">
-                <RetirementCalculator />
-              </div>
-            </>
-          )}
-
-          {/* Settings */}
           {activeSection === 'settings' && (
             <>
-              <header className="page-header">
-                <h2>Settings</h2>
-                <p>Manage your account and data</p>
-              </header>
-
+              <header className="page-header"><h2>Settings</h2></header>
               <div className="card">
-                <h3 className="card-title">Profile</h3>
-                <div className="settings-item">
-                  <div>
-                    <strong>Name</strong>
-                    <p>{userData.name || 'Not set'}</p>
-                  </div>
+                <h3>Data ({transactions.length} transactions)</h3>
+                <div className="settings-row">
+                  <div><strong>Export Backup</strong><p>Download all data as JSON</p></div>
+                  <button className="btn small" onClick={handleExportData}><Download size={14} /> Export</button>
                 </div>
-                <div className="settings-item">
-                  <div>
-                    <strong>Monthly Income</strong>
-                    <p>{formatCurrency(userData.monthlyIncome)}</p>
-                  </div>
-                  <button className="btn small" onClick={() => setShowIncomeModal(true)}>
-                    <Edit2 size={14} /> Edit
-                  </button>
+                <div className="settings-row">
+                  <div><strong>Reset Data</strong><p>Delete everything</p></div>
+                  <button className="btn small danger" onClick={handleResetData}><RotateCcw size={14} /> Reset</button>
                 </div>
-              </div>
-
-              <div className="card">
-                <h3 className="card-title">Data Management</h3>
-                <div className="settings-item">
-                  <div>
-                    <strong>Export Data</strong>
-                    <p>Download a backup of all your data</p>
-                  </div>
-                  <button className="btn small" onClick={handleExportData}>
-                    <Download size={14} /> Export
-                  </button>
-                </div>
-                <div className="settings-item">
-                  <div>
-                    <strong>Reset All Data</strong>
-                    <p>Delete all data and start fresh</p>
-                  </div>
-                  <button className="btn small danger" onClick={handleResetData}>
-                    <RotateCcw size={14} /> Reset
-                  </button>
-                </div>
-              </div>
-
-              <div className="card">
-                <h3 className="card-title">About</h3>
-                <p style={{ color: '#64748b', marginTop: 8 }}>
-                  ClearPath Finance stores all data locally in your browser. Your financial information never leaves your device.
-                </p>
               </div>
             </>
           )}
         </main>
 
-        {/* Modals */}
         <TransactionModal
           isOpen={showTransactionModal}
           onClose={() => { setShowTransactionModal(false); setEditingTransaction(null); }}
           onSave={handleSaveTransaction}
           transaction={editingTransaction}
-        />
-        <SubscriptionModal
-          isOpen={showSubscriptionModal}
-          onClose={() => { setShowSubscriptionModal(false); setEditingSubscription(null); }}
-          onSave={handleSaveSubscription}
-          subscription={editingSubscription}
-        />
-        <IncomeModal
-          isOpen={showIncomeModal}
-          onClose={() => setShowIncomeModal(false)}
-          userData={userData}
-          onSave={(income) => setUserData({ ...userData, monthlyIncome: income })}
         />
       </div>
     </>
@@ -1449,1062 +912,193 @@ export default function ClearPathFinance() {
 // STYLES
 // ============================================
 const styles = `
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --border-color: #e2e8f0;
-  --border-dark: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --bg: #fff; --bg2: #f8fafc; --bg3: #f1f5f9;
+  --border: #e2e8f0; --border2: #cbd5e1;
+  --text: #0f172a; --text2: #475569; --muted: #94a3b8;
   --accent: #0f172a;
-  --success: #10b981;
-  --success-bg: #ecfdf5;
-  --warning: #f59e0b;
-  --warning-bg: #fffbeb;
-  --danger: #ef4444;
-  --danger-bg: #fef2f2;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --success: #10b981; --success-bg: #ecfdf5;
+  --danger: #ef4444; --danger-bg: #fef2f2;
+  --info: #3b82f6; --info-bg: #eff6ff;
+  --radius: 12px; --radius-sm: 8px;
 }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+.app { display: flex; min-height: 100vh; }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.5;
-}
-
-.app {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* Setup Wizard */
-.setup-wizard {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 20px;
-}
-
-.setup-card {
-  background: white;
-  border-radius: 20px;
-  padding: 48px;
-  max-width: 480px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-}
-
-.setup-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.setup-header h1 {
-  font-size: 1.75rem;
-  margin-bottom: 8px;
-}
-
-.setup-header p {
-  color: var(--text-secondary);
-}
-
-.setup-progress {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 40px;
-}
-
-.progress-dot {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-muted);
-}
-
-.progress-dot.active {
-  background: var(--accent);
-  color: white;
-}
-
-.progress-line {
-  width: 40px;
-  height: 3px;
-  background: var(--bg-tertiary);
-  border-radius: 2px;
-}
-
-.progress-line.active {
-  background: var(--accent);
-}
-
-.setup-step {
-  text-align: center;
-}
-
-.setup-step h2 {
-  font-size: 1.25rem;
-  margin-bottom: 8px;
-}
-
-.setup-hint {
-  color: var(--text-muted);
-  margin-bottom: 24px;
-  font-size: 0.9375rem;
-}
-
-.setup-input {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.125rem;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
-  text-align: center;
-  margin-bottom: 24px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.setup-input:focus {
-  border-color: var(--accent);
-}
-
-.input-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 0 16px;
-  margin-bottom: 24px;
-}
-
-.input-with-icon:focus-within {
-  border-color: var(--accent);
-}
-
-.input-with-icon input {
-  flex: 1;
-  border: none;
-  padding: 16px 0;
-  font-size: 1.125rem;
-  text-align: center;
-  outline: none;
-}
-
-.setup-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 32px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: var(--radius);
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.setup-btn.primary {
-  background: var(--accent);
-  color: white;
-}
-
-.setup-btn.primary:hover {
-  opacity: 0.9;
-}
-
-.setup-btn.primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.setup-btn.secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.setup-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.income-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 32px;
-}
-
-.income-option {
-  padding: 12px 20px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
-  background: white;
-  font-size: 0.9375rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.income-option:hover {
-  border-color: var(--border-dark);
-}
-
-.income-option.selected {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: white;
-}
-
-.skip-setup {
-  display: block;
-  margin: 32px auto 0;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.skip-setup:hover {
-  color: var(--text-secondary);
-}
+/* Setup */
+.setup-wizard { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8fafc, #e2e8f0); padding: 20px; }
+.setup-card { background: #fff; border-radius: 20px; padding: 48px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center; }
+.setup-card h1 { font-size: 1.5rem; margin-bottom: 8px; }
+.setup-card > p { color: var(--text2); margin-bottom: 32px; }
+.setup-step h2 { font-size: 1.125rem; margin-bottom: 16px; }
+.setup-step input { width: 100%; padding: 14px; font-size: 1rem; border: 2px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; outline: none; text-align: center; }
+.setup-step input:focus { border-color: var(--accent); }
+.input-with-icon { display: flex; align-items: center; border: 2px solid var(--border); border-radius: var(--radius); padding: 0 14px; margin-bottom: 20px; }
+.input-with-icon:focus-within { border-color: var(--accent); }
+.input-with-icon input { flex: 1; border: none; padding: 14px 0; text-align: center; outline: none; font-size: 1rem; }
+.btn-row { display: flex; gap: 12px; justify-content: center; }
+.skip { background: none; border: none; color: var(--muted); margin-top: 24px; cursor: pointer; }
 
 /* Sidebar */
-.sidebar {
-  width: 260px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  padding: 24px 0;
-  position: fixed;
-  height: 100vh;
-  overflow-y: auto;
-  z-index: 100;
-  transition: transform 0.3s;
-}
+.sidebar { width: 240px; background: var(--bg2); border-right: 1px solid var(--border); padding: 20px 0; position: fixed; height: 100vh; z-index: 100; transition: transform 0.3s; }
+.logo { padding: 0 20px 16px; border-bottom: 1px solid var(--border); }
+.logo h1 { font-size: 1.25rem; }
+.logo span { font-size: 0.75rem; color: var(--muted); }
+.greeting { display: flex; align-items: center; gap: 8px; padding: 12px 20px; color: var(--text2); font-size: 0.875rem; border-bottom: 1px solid var(--border); }
+.nav-list { list-style: none; padding: 12px 8px; }
+.nav-link { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: none; background: none; border-radius: var(--radius-sm); color: var(--text2); font-size: 0.875rem; cursor: pointer; text-align: left; }
+.nav-link:hover { background: var(--bg3); color: var(--text); }
+.nav-link.active { background: var(--accent); color: #fff; }
+.badge { margin-left: auto; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 100px; font-size: 0.7rem; }
 
-.logo {
-  padding: 0 24px 20px;
-  border-bottom: 1px solid var(--border-color);
-}
+/* Main */
+.main { flex: 1; margin-left: 240px; padding: 24px 32px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.page-header h2 { font-size: 1.5rem; margin-bottom: 4px; }
+.page-header p { color: var(--text2); font-size: 0.875rem; }
+.header-actions { display: flex; gap: 10px; }
 
-.logo h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
+/* Toast */
+.toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 20px; font-weight: 500; }
+.toast.success { background: var(--success-bg); color: #166534; }
 
-.logo span {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-.user-greeting {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 24px;
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.nav-list {
-  list-style: none;
-  padding: 16px 12px;
-}
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  transition: all 0.15s;
-}
-
-.nav-link:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.nav-link.active {
-  background: var(--accent);
-  color: white;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  margin-left: 260px;
-  padding: 32px 40px;
-  min-height: 100vh;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 32px;
-}
-
-.page-header h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.page-header p {
-  color: var(--text-secondary);
-}
-
-/* Stats Grid */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stats-grid.small {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-.stat-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 20px;
-  transition: all 0.2s;
-}
-
-.stat-card.clickable {
-  cursor: pointer;
-}
-
-.stat-card:hover {
-  border-color: var(--border-dark);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.stat-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 100px;
-}
-
-.stat-trend.up {
-  background: var(--success-bg);
-  color: var(--success);
-}
-
-.stat-trend.down {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.stat-title {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.stat-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.stat-card.clickable { cursor: pointer; }
+.stat-header { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.stat-icon { width: 36px; height: 36px; background: var(--bg3); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+.trend { font-size: 0.75rem; padding: 4px 8px; border-radius: 100px; }
+.trend.up { background: var(--success-bg); color: var(--success); }
+.trend.down { background: var(--danger-bg); color: var(--danger); }
+.stat-value { font-size: 1.25rem; font-weight: 700; }
+.stat-title { font-size: 0.8125rem; color: var(--text2); margin-top: 4px; }
+.stat-subtitle { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
 /* Cards */
-.card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.card-header h3, .card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-/* Dashboard Grid */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-}
-
-.dashboard-grid .full-width {
-  grid-column: 1 / -1;
-}
+.card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+.card h3 { font-size: 1rem; margin-bottom: 16px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
 /* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 48px 24px;
-}
-
-.empty-icon {
-  width: 64px;
-  height: 64px;
-  background: var(--bg-tertiary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-  color: var(--text-muted);
-}
-
-.empty-state h3 {
-  font-size: 1.125rem;
-  margin-bottom: 8px;
-}
-
-.empty-state p {
-  color: var(--text-muted);
-  margin-bottom: 20px;
-}
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-icon { width: 56px; height: 56px; background: var(--bg3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: var(--muted); }
+.empty-state h3 { font-size: 1rem; margin-bottom: 6px; }
+.empty-state p { color: var(--muted); margin-bottom: 16px; font-size: 0.875rem; }
 
 /* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn.primary {
-  background: var(--accent);
-  color: white;
-}
-
-.btn.primary:hover {
-  opacity: 0.9;
-}
-
-.btn.secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn.small {
-  padding: 8px 14px;
-  font-size: 0.8125rem;
-}
-
-.btn.danger {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
-
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: var(--bg-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.15s;
-}
-
-.icon-btn:hover {
-  background: var(--bg-tertiary);
-}
-
-.icon-btn.danger:hover {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; font-size: 0.875rem; font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.secondary { background: var(--bg2); border: 1px solid var(--border); }
+.btn.small { padding: 6px 12px; font-size: 0.8125rem; }
+.btn.danger { background: var(--danger-bg); color: var(--danger); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.icon-btn { width: 28px; height: 28px; border-radius: var(--radius-sm); border: none; background: var(--bg2); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text2); }
+.icon-btn:hover { background: var(--bg3); }
+.icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger); }
 
 /* Quick Actions */
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
+.quick-actions { display: flex; flex-direction: column; gap: 10px; }
+.quick-actions button { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.875rem; cursor: pointer; }
+.quick-actions button:hover { background: var(--bg3); }
 
-.quick-action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+/* Transactions */
+.txn-list { display: flex; flex-direction: column; }
+.txn-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.txn-item:last-child { border-bottom: none; }
+.txn-info { flex: 1; min-width: 0; }
+.txn-desc { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.txn-meta { font-size: 0.75rem; color: var(--muted); }
+.txn-actions { display: flex; align-items: center; gap: 10px; }
+.txn-amount { font-weight: 600; }
+.txn-amount.income { color: var(--success); }
+.txn-amount.expense { color: var(--danger); }
 
-.quick-action:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-dark);
-}
+/* Upload */
+.upload-section { max-width: 700px; }
+.upload-zone { border: 2px dashed var(--border2); border-radius: var(--radius); padding: 48px; text-align: center; cursor: pointer; background: var(--bg2); }
+.upload-zone:hover { border-color: var(--accent); background: var(--bg3); }
+.upload-icon { width: 56px; height: 56px; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.upload-zone h3 { font-size: 1.125rem; margin-bottom: 6px; }
+.upload-zone p { color: var(--muted); }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--info); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Transaction List */
-.transaction-list {
-  display: flex;
-  flex-direction: column;
-}
+.notice { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 0.875rem; }
+.notice.info { background: var(--info-bg); color: #1e40af; }
+.notice.error { background: var(--danger-bg); color: #991b1b; }
+.notice strong { display: block; }
+.notice p { margin-top: 4px; }
 
-.transaction-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
-}
+.tips { margin-top: 24px; padding: 16px; background: var(--bg2); border-radius: var(--radius); }
+.tips h4 { margin-bottom: 8px; }
+.tips ul { margin-left: 20px; color: var(--text2); font-size: 0.875rem; }
+.tips li { margin-bottom: 4px; }
 
-.transaction-item:last-child {
-  border-bottom: none;
-}
+.debug-panel { margin-top: 16px; }
+.debug-panel summary { cursor: pointer; font-size: 0.875rem; color: var(--text2); padding: 8px; background: var(--bg2); border-radius: var(--radius-sm); }
+.debug-panel pre { margin-top: 8px; padding: 12px; background: #1e293b; color: #e2e8f0; border-radius: var(--radius-sm); font-size: 0.75rem; overflow: auto; max-height: 200px; }
 
-.transaction-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.transaction-desc {
-  font-weight: 500;
-}
-
-.transaction-meta {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.transaction-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.transaction-amount {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.transaction-amount.expense {
-  color: var(--danger);
-}
-
-.transaction-amount.income {
-  color: var(--success);
-}
-
-/* Subscription List */
-.subscription-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.subscription-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.subscription-item:last-child {
-  border-bottom: none;
-}
-
-.subscription-name {
-  font-weight: 500;
-}
-
-.subscription-meta {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.subscription-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.subscription-amount {
-  font-weight: 600;
-  font-size: 1.125rem;
-}
+/* Preview */
+.preview-panel { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.preview-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--success-bg); border-bottom: 1px solid #bbf7d0; }
+.preview-header h3 { display: flex; align-items: center; gap: 8px; color: #166534; font-size: 1rem; }
+.preview-header p { color: #166534; font-size: 0.8125rem; margin-top: 4px; }
+.preview-toolbar { padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.preview-toolbar label { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; cursor: pointer; }
+.preview-toolbar input { width: 16px; height: 16px; }
+.preview-list { max-height: 360px; overflow-y: auto; }
+.preview-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+.preview-item.selected { background: var(--bg2); }
+.preview-item input { width: 16px; height: 16px; }
+.preview-item .date { width: 90px; color: var(--muted); flex-shrink: 0; }
+.preview-item .desc { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.preview-item select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem; width: 120px; }
+.preview-item .amount { width: 90px; text-align: right; font-weight: 600; flex-shrink: 0; }
+.preview-item .amount.income { color: var(--success); }
+.preview-item .amount.expense { color: var(--danger); }
+.preview-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg2); border-top: 1px solid var(--border); }
+.summary { display: flex; gap: 20px; font-size: 0.875rem; }
+.summary .income { color: var(--success); }
+.summary .expense { color: var(--danger); }
 
 /* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 20px;
-}
-
-.modal {
-  background: white;
-  border-radius: var(--radius);
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.modal-close {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: var(--bg-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal form, .modal > div:not(.modal-header) {
-  padding: 24px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-/* Form Elements */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 12px 14px;
-  font-size: 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--accent);
-}
-
-.form-group .input-with-icon {
-  margin-bottom: 0;
-}
-
-.form-group .input-with-icon input {
-  text-align: left;
-}
-
-.input-hint {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.toggle-group {
-  display: flex;
-  gap: 8px;
-}
-
-.toggle-btn {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  font-size: 0.9375rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.toggle-btn.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-/* Calculator Styles */
-.calculator-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-}
-
-.calculator-inputs .form-group {
-  margin-bottom: 16px;
-}
-
-.calculator-results .result-hero {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: var(--radius);
-  padding: 28px;
-  text-align: center;
-  color: white;
-  margin-bottom: 20px;
-}
-
-.result-label {
-  font-size: 0.875rem;
-  opacity: 0.8;
-  display: block;
-}
-
-.result-value {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin: 8px 0;
-}
-
-.result-subtitle {
-  font-size: 0.8125rem;
-  opacity: 0.7;
-}
-
-.result-breakdown {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  padding: 20px;
-}
-
-.breakdown-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  font-size: 0.9375rem;
-}
-
-.breakdown-item.total {
-  font-weight: 600;
-}
-
-.breakdown-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 8px 0;
-}
-
-/* Vehicle Comparison */
-.vehicle-comparison {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.vehicle-option {
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 20px;
-  text-align: center;
-  position: relative;
-}
-
-.vehicle-option.best {
-  border-color: var(--success);
-  background: var(--success-bg);
-}
-
-.vehicle-option h4 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.best-badge {
-  position: absolute;
-  top: -10px;
-  right: 12px;
-  background: var(--success);
-  color: white;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 100px;
-}
-
-.option-amount {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.option-label {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-/* Retirement Stats */
-.retirement-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.retirement-stat {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 1.25rem;
-  font-weight: 700;
-  display: block;
-}
-
-.stat-label {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.progress-container {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  padding: 16px;
-}
-
-.progress-bar {
-  height: 8px;
-  background: var(--border-color);
-  border-radius: 100px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--success);
-  border-radius: 100px;
-  transition: width 0.3s;
-}
-
-.progress-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.progress-status.success {
-  color: var(--success);
-}
-
-.progress-status.warning {
-  color: var(--warning);
-}
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal { background: #fff; border-radius: var(--radius); width: 100%; max-width: 420px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 1rem; }
+.close-btn { width: 28px; height: 28px; border-radius: var(--radius-sm); border: none; background: var(--bg2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal form { padding: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.8125rem; color: var(--text2); margin-bottom: 6px; }
+.form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9375rem; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; }
+.toggle-group { display: flex; gap: 8px; }
+.toggle-group button { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); cursor: pointer; font-size: 0.875rem; }
+.toggle-group button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
 /* Settings */
-.settings-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.settings-item:last-child {
-  border-bottom: none;
-}
-
-.settings-item p {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
+.settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row p { font-size: 0.8125rem; color: var(--muted); margin-top: 2px; }
 
 /* Mobile */
-.mobile-menu-btn {
-  display: none;
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 200;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 1024px) {
-  .calculator-section {
-    grid-template-columns: 1fr;
-  }
-  
-  .vehicle-comparison {
-    grid-template-columns: 1fr;
-  }
-}
+.mobile-menu { display: none; position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--accent); color: #fff; border: none; border-radius: 50%; cursor: pointer; z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
 
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    padding: 24px;
-  }
-  
-  .mobile-menu-btn {
-    display: flex;
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stats-grid.small {
-    grid-template-columns: 1fr;
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 16px;
-  }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 20px 16px; }
+  .mobile-menu { display: flex; align-items: center; justify-content: center; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .page-header { flex-direction: column; gap: 12px; }
+  .header-actions { width: 100%; }
+  .header-actions .btn { flex: 1; justify-content: center; }
+  .preview-item { flex-wrap: wrap; }
+  .preview-item .desc { width: 100%; order: 10; margin-top: 4px; }
 }
 `;
